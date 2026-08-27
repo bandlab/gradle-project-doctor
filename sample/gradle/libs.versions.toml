@@ -1,0 +1,11 @@
+[versions]
+kotlin = "2.1.20"
+guava = "32.1.2-jre"
+json = "20260814"
+
+[libraries]
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+json = { module = "org.json:json", version.ref = "json" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

@@ -18,6 +18,7 @@ Originally developed for **BandLab Android (1600+ modules)**, now open source un
 - [Tasks & CLI Options](#tasks--cli-options)
 - [Rules DSL](#rules-dsl)
 - [How It Works](#how-it-works)
+- [Sample](#sample)
 - [Development](#development)
 - [Migration](#migration)
 - [License](#license)
@@ -177,6 +178,18 @@ doctorCheck ─────► runtimeClasspath ──────────�
 ```
 
 ---
+
+## Sample
+
+A runnable multi-module sample lives in [`sample/`](sample/) that dogfoods the plugin via `includeBuild("..")` — no publish step required.
+
+```bash
+./gradlew -p sample doctorCheck --summary   # never fails, writes build/doctor/merged.json
+./gradlew -p sample doctorCheck             # fails on error-level violations
+./gradlew -p sample doctorGenerateBaseline  # (re)generate sample/doctor-baseline.json
+```
+
+See [`sample/README.md`](sample/README.md) for module graph and rules covered (`thatHasPluginWith`, `thatDoesNotHavePluginWith`, `thatHasDependencyWith`, `thatTransitivelyExpose`, `thatNamedWith`, `reportAs`, `withExclusion`).
 
 ## Development
 
