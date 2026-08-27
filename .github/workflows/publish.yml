@@ -1,0 +1,91 @@
+name: Publish
+
+on:
+  release:
+    # `published` fires when a release (or pre-release) is actually published, including
+    # one promoted from a draft. `created` misses that promotion entirely and instead
+    # fires when a draft is *saved*, at which point the tag does not exist yet.
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 0.2.0 or 0.2.0-SNAPSHOT)'
+        required: false
+        type: string
+
+# This job only reads the repository; the publish credentials come from secrets.
+permissions:
+  contents: read
+
+# Never let two publishes race for the same coordinates. Uploads are not cancelled
+# midway: a half-published release is worse than a queued one.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish-artifactory:
+    runs-on: ubuntu-latest
+    # Gates the Artifactory secrets behind the environment's protection rules, so a
+    # `workflow_dispatch` from an arbitrary ref cannot publish unreviewed.
+    environment: publish
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 25
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # Without credentials the BandLab repository is never registered, so the publish
+      # task would not exist and Gradle would fail with an opaque "Task not found".
+      - name: Verify Artifactory credentials are configured
+        env:
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        run: |
+          if [ -z "$ARTIFACTORY_USERNAME" ] || [ -z "$ARTIFACTORY_PASSWORD" ]; then
+            echo "::error::ARTIFACTORY_USERNAME and ARTIFACTORY_PASSWORD secrets must both be set." \
+                 "Without them the BandLab repository is not registered and nothing can be published."
+            exit 1
+          fi
+
+      # A published artifact is immutable, so verify before uploading rather than
+      # relying on the release commit having passed the Build workflow.
+      - name: Check
+        run: ./gradlew check --no-configuration-cache
+
+      - name: Publish to BandLab Artifactory
+        env:
+          # Untrusted values reach the script through the environment, never through
+          # `${{ }}` interpolation: those are pasted into the script text before bash
+          # parses it, and a tag name may legally contain shell metacharacters.
+          INPUT_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          # Deliberately NOT ARTIFACTORY_URL: a single URL would force snapshots into the
+          # release repo. These two are selected by the version suffix.
+          ARTIFACTORY_SNAPSHOT_URL: ${{ secrets.ARTIFACTORY_SNAPSHOT_URL }}
+          ARTIFACTORY_RELEASE_URL: ${{ secrets.ARTIFACTORY_RELEASE_URL }}
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        run: |
+          VERSION="$INPUT_VERSION"
+          if [ -z "$VERSION" ] && [ "$GITHUB_REF" != "${GITHUB_REF#refs/tags/v}" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          # Catches release tags that are not v-prefixed, which the check above misses.
+          if [ -z "$VERSION" ] && [ -n "$RELEASE_TAG" ]; then
+            VERSION="${RELEASE_TAG#v}"
+          fi
+          if [ -n "$VERSION" ]; then
+            echo "Publishing version $VERSION to Artifactory"
+            ./gradlew publishAllPublicationsToBandLabRepository -PprojectDoctorVersion="$VERSION" --no-configuration-cache
+          else
+            echo "Publishing SNAPSHOT to Artifactory"
+            ./gradlew publishAllPublicationsToBandLabRepository --no-configuration-cache
+          fi

@@ -4,10 +4,10 @@
 
 Originally developed for **BandLab Android (1600+ modules)**, now open source under **Apache 2.0** — see [`LICENSE.txt`](LICENSE.txt).
 
-| Coordinates    | Value                                                                                              |
-| -------------- | -------------------------------------------------------------------------------------------------- |
-| **Plugin ID**  | `com.bandlab.project.doctor`                                                                       |
-| **Artifact**   | `com.bandlab:project-doctor:<version>`                                                             |
+| Coordinates   | Value                                  |
+| ------------- | -------------------------------------- |
+| **Plugin ID** | `com.bandlab.project.doctor`           |
+| **Artifact**  | `com.bandlab:project-doctor:<version>` |
 
 ---
 
@@ -104,12 +104,11 @@ projectDoctor {
 
 ### Gradle Properties
 
-| Property                                   | Description                                |
-| ------------------------------------------ | ------------------------------------------ |
-| `-PPROJECT_DOCTOR_ENABLE_ON_COMPILE=true`  | Hook check into `KotlinCompile` tasks      |
-| `-PPROJECT_DOCTOR_DEPENDS_CI_CHECK=true`   | Wire `doctorCheck` into CI check lifecycle |
-| `-PPROJECT_DOCTOR_DISABLE_ON_SYNC=true`    | Disable plugin during Gradle sync          |
-| `-PPROJECT_DOCTOR_AGGR_ALWAYS_ENABLE=true` | Always enable root aggregation task        |
+| Property                                   | Description                           |
+| ------------------------------------------ | ------------------------------------- |
+| `-PPROJECT_DOCTOR_ENABLE_ON_COMPILE=true`  | Hook check into `KotlinCompile` tasks |
+| `-PPROJECT_DOCTOR_DISABLE_ON_SYNC=true`    | Disable plugin during Gradle sync     |
+| `-PPROJECT_DOCTOR_AGGR_ALWAYS_ENABLE=true` | Always enable root aggregation task   |
 
 ### Task Arguments
 
@@ -182,15 +181,22 @@ doctorCheck ─────► runtimeClasspath ──────────�
 ## Development
 
 ```bash
-# Run tests (64 tests)
-./gradlew -p gradle :project-doctor:test -Pspotlight.enabled=false
+# Run tests (68 tests)
+./gradlew check
 
 # Publish SNAPSHOT to local Maven for dogfooding
-./gradlew -p gradle :project-doctor:publishToMavenLocal -PprojectDoctorVersion=0.1.0-SNAPSHOT
-
-# Dogfood via ~/.m2 (no settings.gradle edit needed when REPO_USE_MAVEN_LOCAL is wired)
-REPO_USE_MAVEN_LOCAL=true ./gradlew :common:utils:doctorCheck -Pspotlight.enabled=false
+./gradlew publishToMavenLocal -PprojectDoctorVersion=0.1.0-SNAPSHOT
 ```
+
+### Publishing
+
+Releases are published by the [`Publish` workflow](.github/workflows/publish.yml) —
+triggered on GitHub release, or manually via `workflow_dispatch` with a version.
+
+The version comes from `-PprojectDoctorVersion` (default `0.1.0-SNAPSHOT`); a
+`-SNAPSHOT` suffix routes to the snapshot repository automatically. Remote
+repositories are only registered when their credentials are present, so local
+builds work unconfigured.
 
 ---
 

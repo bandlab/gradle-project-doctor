@@ -1,0 +1,15 @@
+[versions]
+agp = "9.3.1"
+kotlin = "2.4.10"
+
+[plugins]
+mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.34.0" }
+
+[libraries]
+android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+
+json = { module = "org.json:json", version = "20260814" }
+
+junit = { module = "junit:junit", version = "4.13.2" }
+truth = { module = "com.google.truth:truth", version = "1.4.5" }
