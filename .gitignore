@@ -5,3 +5,4 @@ out/
 *.iml
 .local/
 local.properties
+.commandcode

@@ -3,13 +3,14 @@ package com.bandlab.plugin.doctor
 import com.bandlab.plugin.doctor.internal.DoctorCheckAttr
 import com.bandlab.plugin.doctor.internal.utils.exposedDeclaredComponents
 import com.bandlab.plugin.doctor.internal.utils.getBuildProperty
-import com.bandlab.plugin.doctor.internal.utils.onRuntimeConfigurationAvailable
+import com.bandlab.plugin.doctor.internal.utils.runtimeClasspathConfigurations
 import com.bandlab.plugin.doctor.internal.utils.runtimeResolvedComponents
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationPublications
+import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.getByType
@@ -87,19 +88,17 @@ class ProjectDoctorPlugin : Plugin<Project> {
 
         val dependsCiCheck = isDependsOnCiCheck
 
-        val rootDoctorConf = configurations.dependencyScope(ConfigurationSpec.doctorDeps.variantName)
+        val rootDoctorConf = configurations.dependencyScope(DepsScope.CHECK)
         val doctorCheckDependency = rootProject.resolvable(
             name = ConfigurationSpec.doctorCheck,
-            parentConf = provider { rootDoctorConf.get() }
+            parentConf = provider { rootDoctorConf.get() },
         )
 
-        // Aggregate the baseline from the subprojects' non-failing `doctorGenerateBaseline` tasks
-        // (a separate variant from `doctorCheck`), so generating a baseline never fails on the very
-        // violations it is meant to capture.
-        val rootBaselineConf = configurations.dependencyScope(ConfigurationSpec.doctorBaselineDeps.variantName)
+        // baseline: separate non-failing variant
+        val rootBaselineConf = configurations.dependencyScope(DepsScope.BASELINE)
         val doctorBaselineDependency = rootProject.resolvable(
             name = ConfigurationSpec.doctorBaseline,
-            parentConf = provider { rootBaselineConf.get() }
+            parentConf = provider { rootBaselineConf.get() },
         )
 
         subprojects.forEach { sub ->
@@ -135,11 +134,12 @@ class ProjectDoctorPlugin : Plugin<Project> {
         val populateTask = tasks.register<DoctorPopulateTask>(TASK_DOCTOR_POPULATE) {
             val extension = ProjectDoctorExtension.from(project)
             projectPath.set(project.path)
-            observedPlugins.set(extension.observedPlugins.map { observed ->
-                observed.filter { project.pluginManager.hasPlugin(it) }.toSet()
-            })
+            observedPlugins.set(
+                extension.observedPlugins.map { observed ->
+                    observed.filter { project.pluginManager.hasPlugin(it) }.toSet()
+                },
+            )
 
-            // Wait until execution to get runtime resolved components
             dependencies.set(project.runtimeResolvedComponents())
             exposedDependencies.set(project.exposedDeclaredComponents())
 
@@ -149,27 +149,33 @@ class ProjectDoctorPlugin : Plugin<Project> {
             projectCompositionFile.set(rootDoctorOutputDir.file(PROJECT_COMPOSITION_FILE))
         }
 
-        // Produce consumable of project composition
         project.consumable(ConfigurationSpec.doctorComposition) {
             artifact(populateTask.flatMap { it.projectCompositionFile })
         }
 
-        // Resolve project compositions
-        // Extend from runtime configuration to get the sub-projects
+        // only direct project deps — avoids unwanted deps like desktop-variant KMP libs
+        val doctorCompositionDeps = configurations.dependencyScope(DepsScope.COMPOSITION)
         val compositionResolvable = project.resolvable(
             name = ConfigurationSpec.doctorComposition,
+            parentConf = provider { doctorCompositionDeps.get() },
         )
-        val compositionFiles = compositionResolvable.map {
-            // We need to filter here since we extends runtime configuration
-            it.incoming.artifactView { lenient(true) }.files
-                .filter { f -> f.name == PROJECT_COMPOSITION_FILE }
-        }
+        compositionResolvable.configure { isTransitive = false }
 
-        // Declare dependencies to sub projects composition too
-        onRuntimeConfigurationAvailable { runtimeConf ->
-            compositionResolvable.configure {
-                extendsFrom(runtimeConf)
+        doctorCompositionDeps.get().withDependencies {
+            val seen = mutableSetOf<String>()
+            fun addDep(path: String) {
+                if (seen.add(path)) add(consumableDeps(path, ConfigurationSpec.doctorComposition))
             }
+            fun collect(conf: Configuration, visited: MutableSet<Configuration> = mutableSetOf()) {
+                if (!visited.add(conf)) return
+                conf.dependencies.filterIsInstance<ProjectDependency>().forEach { addDep(it.path) }
+                conf.extendsFrom.forEach { collect(it, visited) }
+            }
+            runtimeClasspathConfigurations().forEach { collect(it) }
+        }
+        val compositionFiles = compositionResolvable.map {
+            // lenient: missing consumable -> size check in DoctorValidate
+            it.incoming.artifactView { lenient(true) }.files
         }
 
         tasks.register<DoctorValidateTask>(TASK_DOCTOR_VALIDATE) {
@@ -187,10 +193,7 @@ class ProjectDoctorPlugin : Plugin<Project> {
             configure(extension, project)
         }
 
-        // Register another task with different name but same configuration
-        // for easier execution from command line. It is summary-only so it never fails on
-        // violations, which is exactly what the root `doctorGenerateBaseline` aggregates from.
-        // Distinct output files avoid overlapping with `doctorCheck` when both run in one build.
+        // summaryOnly baseline — same check, distinct outputs
         val baselineTask = tasks.register<DoctorCheckTask>(TASK_BASELINE_GENERATE) {
             val extension = ProjectDoctorExtension.from(project)
             summaryOnly.set(true)
@@ -205,12 +208,10 @@ class ProjectDoctorPlugin : Plugin<Project> {
             )
         }
 
-        // Expose doctor check artifacts
         project.consumable(ConfigurationSpec.doctorCheck) {
             artifact(checkTask.flatMap { it.jsonReportFile })
         }
 
-        // Expose non-failing baseline artifacts for the root `doctorGenerateBaseline` aggregation
         project.consumable(ConfigurationSpec.doctorBaseline) {
             artifact(baselineTask.flatMap { it.jsonReportFile })
         }
@@ -264,10 +265,12 @@ class ProjectDoctorPlugin : Plugin<Project> {
     private fun Project.consumableDeps(
         path: String,
         name: ConfigurationName,
-    ) = dependencies.project(mapOf(
-        "path" to path,
-        "configuration" to name.consumable
-    ))
+    ) = dependencies.project(
+        mapOf(
+            "path" to path,
+            "configuration" to name.consumable,
+        ),
+    )
 
     private val Project.isEnableCompileTaskIntegration: Boolean
         get() = getBuildProperty("PROJECT_DOCTOR_ENABLE_ON_COMPILE") == "true"
@@ -290,6 +293,12 @@ class ProjectDoctorPlugin : Plugin<Project> {
         private const val PROJECT_COMPOSITION_FILE = "project_composition.json"
     }
 
+    private object DepsScope {
+        const val CHECK = "doctorCheckDeps"
+        const val BASELINE = "doctorBaselineDeps"
+        const val COMPOSITION = "doctorCompositionDeps"
+    }
+
     /**
      * Specification for project doctor plugin configurations.
      *
@@ -299,8 +308,6 @@ class ProjectDoctorPlugin : Plugin<Project> {
      * - [ConfigurationName.consumable]: Consumable configuration for publishing artifacts
      */
     private object ConfigurationSpec {
-        val doctorDeps = ConfigurationName("doctorDeps")
-        val doctorBaselineDeps = ConfigurationName("doctorBaselineDeps")
         val doctorCheck = ConfigurationName("doctorCheck")
         val doctorBaseline = ConfigurationName("doctorBaseline")
         val doctorComposition = ConfigurationName("doctorComposition")

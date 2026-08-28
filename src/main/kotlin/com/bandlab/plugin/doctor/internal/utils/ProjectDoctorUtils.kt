@@ -1,6 +1,5 @@
 package com.bandlab.plugin.doctor.internal.utils
 
-import com.android.build.api.variant.AndroidComponentsExtension
 import org.gradle.api.NamedDomainObjectProvider
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -47,21 +46,8 @@ internal fun Project.exposedDeclaredComponents(): Provider<Set<String>> = provid
         .toSet()
 }
 
-/**
- * Wait until the runtime configuration is available and call [onAvailable].
- * This avoids [afterEvaluate] by using plugin-specific callbacks.
- */
-internal fun Project.onRuntimeConfigurationAvailable(onAvailable: (Configuration) -> Unit) {
-    plugins.withId("com.android.base") {
-        val extension = extensions.findByType(AndroidComponentsExtension::class.java)
-        requireNotNull(extension).onVariants {
-            onAvailable(it.runtimeConfiguration)
-        }
-    }
-    plugins.withId("org.jetbrains.kotlin.jvm") {
-        onAvailable(configurations.getByName("runtimeClasspath"))
-    }
-}
+internal fun Project.runtimeClasspathConfigurations(): List<Configuration> =
+    listOfNotNull(findConfiguration(listOf(preferredRuntimeClasspathName()))?.get())
 
 private fun Project.preferredRuntimeClasspathName(): String {
     return when {
