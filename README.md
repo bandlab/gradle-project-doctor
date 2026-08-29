@@ -105,17 +105,28 @@ projectDoctor {
 
 ### Gradle Properties
 
-| Property                                   | Description                           |
-| ------------------------------------------ | ------------------------------------- |
-| `-PPROJECT_DOCTOR_ENABLE_ON_COMPILE=true`  | Hook check into `KotlinCompile` tasks |
-| `-PPROJECT_DOCTOR_DISABLE_ON_SYNC=true`    | Disable plugin during Gradle sync     |
-| `-PPROJECT_DOCTOR_AGGR_ALWAYS_ENABLE=true` | Always enable root aggregation task   |
+| Property                                   | Description                                |
+| ------------------------------------------ | ------------------------------------------ |
+| `-PPROJECT_DOCTOR_ENABLE_ON_COMPILE=true`  | Hook check into `KotlinCompile` tasks      |
+| `-PPROJECT_DOCTOR_DISABLE_ON_SYNC=true`    | Disable plugin during Gradle sync          |
+| `-PPROJECT_DOCTOR_AGGR_ALWAYS_ENABLE=true` | Always enable root aggregation task        |
 
 ### Task Arguments
 
 | Argument    | Effect                                                                 |
 | ----------- | ---------------------------------------------------------------------- |
 | `--summary` | Do not fail build; always write JSON summary (`doctorCheck --summary`) |
+
+### Wiring into your own CI aggregation task
+
+`doctorCheck` is not attached to any existing `check`/CI task automatically. Wire it in from
+your own build logic, e.g.:
+
+```kotlin
+tasks.matching { it.name == "check" }.configureEach {
+    dependsOn(tasks.matching { it.name == "doctorCheck" })
+}
+```
 
 ---
 

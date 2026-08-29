@@ -86,8 +86,6 @@ class ProjectDoctorPlugin : Plugin<Project> {
         if (!isAggregateRequested) return
         logger.info("[Project Doctor] Configuring aggregation task…")
 
-        val dependsCiCheck = isDependsOnCiCheck
-
         val rootDoctorConf = configurations.dependencyScope(DepsScope.CHECK)
         val doctorCheckDependency = rootProject.resolvable(
             name = ConfigurationSpec.doctorCheck,
@@ -110,21 +108,12 @@ class ProjectDoctorPlugin : Plugin<Project> {
             baselineFile.set(extension.baselineFile)
             mergedReportFile.set(layout.buildDirectory.file("doctor/merged.json"))
             jsonReportFiles.from(doctorCheckDependency.map { it.incoming.artifactView { lenient(true) }.files })
-
-            if (dependsCiCheck) {
-                dependsOn(rootProject.tasks.named("ciCheck"))
-            }
         }
 
         tasks.register<DoctorCreateBaselineTask>(TASK_BASELINE_GENERATE) {
             baselineFile.set(extension.baselineFile)
             jsonReportFiles.from(doctorBaselineDependency.map { it.incoming.artifactView { lenient(true) }.files })
-
-            if (dependsCiCheck) {
-                dependsOn(rootProject.tasks.named("ciCheck"))
-            }
         }
-        addToCiCheck()
     }
 
     private fun Project.applyProject() {
@@ -216,33 +205,10 @@ class ProjectDoctorPlugin : Plugin<Project> {
             artifact(baselineTask.flatMap { it.jsonReportFile })
         }
 
-        addToCiCheck()
-
         if (isEnableCompileTaskIntegration) {
             tasks.withType<KotlinCompile>().configureEach {
                 dependsOn(checkTask)
             }
-        }
-    }
-
-    private fun Project.addToCiCheck() {
-        // Optional integration with BandLab's ciCheck — no hard dependency on :common or :ci-logic.
-        // If the BandLab plugin stack is not present, this is a no-op for standalone/open-source usage.
-        try {
-            val bandlabExt = project.extensions.findByName("bandlabConfiguration") as? org.gradle.api.plugins.ExtensionAware
-                ?: return
-            val ciExt = bandlabExt.extensions.findByName("ci") as? org.gradle.api.plugins.ExtensionAware ?: return
-            val checkExt = ciExt.extensions.findByName("check") as? org.gradle.api.plugins.ExtensionAware ?: return
-            // `check.tasks` is a ListProperty<String> — add via reflection to avoid compile-time dep on CiCheckExtension
-            val tasksProp = try {
-                @Suppress("UNCHECKED_CAST")
-                checkExt.javaClass.getMethod("getTasks").invoke(checkExt) as? org.gradle.api.provider.ListProperty<String>
-            } catch (_: Exception) {
-                null
-            }
-            tasksProp?.add(TASK_DOCTOR_CHECK)
-        } catch (_: Exception) {
-            // ignore — ci integration is optional
         }
     }
 
@@ -274,9 +240,6 @@ class ProjectDoctorPlugin : Plugin<Project> {
 
     private val Project.isEnableCompileTaskIntegration: Boolean
         get() = getBuildProperty("PROJECT_DOCTOR_ENABLE_ON_COMPILE") == "true"
-
-    private val Project.isDependsOnCiCheck: Boolean
-        get() = getBuildProperty("PROJECT_DOCTOR_DEPENDS_CI_CHECK") == "true"
 
     private val Project.disableOnSync: Boolean
         get() = getBuildProperty("PROJECT_DOCTOR_DISABLE_ON_SYNC") == "true"
