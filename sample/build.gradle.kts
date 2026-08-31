@@ -3,13 +3,9 @@ plugins {
     alias(libs.plugins.kotlin.jvm) apply false
 }
 
-// Apply doctor to leaf subprojects only (skip intermediate :common and :feature containers)
-subprojects {
-    // Only projects with a build file have runtimeClasspath; skip empty containers
-    if (buildFile.exists()) {
-        apply(plugin = "com.bandlab.project.doctor")
-    }
-}
+// NOTE: the plugin is applied in each module's own build file, not via `subprojects {}`.
+// Cross-project configuration blocks break Isolated Projects on their own, regardless of
+// which plugin they apply. In a real build, put the `id(...)` in a convention plugin.
 
 projectDoctor {
     baselineFile = file("doctor-baseline.json")

@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    id("com.bandlab.project.doctor")
 }
 
 dependencies {

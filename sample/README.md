@@ -40,17 +40,39 @@ pluginManagement {
 }
 ```
 
-`sample/build.gradle.kts` (root):
+`sample/build.gradle.kts` (root) — registers the aggregation task and holds the rules:
 
 ```kotlin
 plugins { id("com.bandlab.project.doctor") }
-subprojects { if (buildFile.exists()) apply(plugin = "com.bandlab.project.doctor") }
 projectDoctor { baselineFile = file("doctor-baseline.json"); errorOn { ... } }
 ```
 
-Root applies the plugin for aggregation, `subprojects {}` applies it to leaf modules for `doctorPopulate`/`doctorCheck` (this matches `ProjectDoctorPlugin`'s `root vs subproject` branching — skip empty `:common`/`:feature` containers). Client projects typically apply the plugin once in the root; subproject tasks are registered automatically via the plugin's configuration if applied via convention.
+Each module's own build file — registers `doctorPopulate` / `doctorCheck`:
+
+```kotlin
+plugins {
+  alias(libs.plugins.kotlin.jvm)
+  id("com.bandlab.project.doctor")
+}
+```
+
+The plugin is applied **per module**, not through `subprojects {}`. A cross-project
+configuration block breaks Isolated Projects on its own, regardless of which plugin it applies,
+so the sample avoids one. In a real build you would put the `id(...)` in a convention plugin and
+write it once. Empty container projects (`:common`, `:feature`) simply don't apply it.
 
 This uses **composite build** — no `mavenLocal` publish needed. For published artifact usage, replace `includeBuild("..")` with `mavenCentral()` + version.
+
+## Configuration Cache & Isolated Projects
+
+`sample/gradle.properties` turns both on, so every command below exercises the plugin under them:
+
+```properties
+org.gradle.configuration-cache=true
+org.gradle.unsafe.isolated-projects=true
+```
+
+Runs report `Configuration cache entry stored` / `reused` with no problems.
 
 ## Run
 
@@ -89,6 +111,7 @@ Outputs:
 ## Notes
 
 - Uses Kotlin JVM `2.1.20` (compatible with plugin `compileOnly` `2.4.10`), `jvmToolchain(17)`, Gradle `9.5.1`.
+- Runs with the configuration cache and Isolated Projects enabled (see `gradle.properties`).
 - No Android SDK required (pure JVM). For Android variant-aware demo, add `com.android.library` module and note `stageDebugRuntimeClasspath` vs `debugRuntimeClasspath` handling.
 - Disable on sync: `-PPROJECT_DOCTOR_DISABLE_ON_SYNC=true`
 - Wire into `KotlinCompile`: `-PPROJECT_DOCTOR_ENABLE_ON_COMPILE=true`
