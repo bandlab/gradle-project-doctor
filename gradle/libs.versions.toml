@@ -3,7 +3,7 @@ agp = "9.3.1"
 kotlin = "2.4.10"
 
 [plugins]
-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.34.0" }
+mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.37.0" }
 
 [libraries]
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
