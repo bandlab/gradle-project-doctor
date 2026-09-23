@@ -69,7 +69,7 @@ This uses **composite build** — no `mavenLocal` publish needed. For published 
 
 ```properties
 org.gradle.configuration-cache=true
-org.gradle.unsafe.isolated-projects=true
+org.gradle.isolated-projects=true
 ```
 
 Runs report `Configuration cache entry stored` / `reused` with no problems.
