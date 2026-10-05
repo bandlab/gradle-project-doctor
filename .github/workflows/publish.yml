@@ -81,6 +81,35 @@ jobs:
             exit 1
           fi
 
+      # A wrong passphrase fails later as an opaque BouncyCastle "checksum mismatch".
+      # Verify it here, and strip CR / trailing newline that copy-paste or
+      # `echo ... | gh secret set` can introduce into the key or password.
+      - name: Verify signing key
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "No signing key configured; skipping."
+            exit 0
+          fi
+          KEY=$(printf '%s' "$SIGNING_KEY" | tr -d '\r')
+          PASS=$(printf '%s' "$SIGNING_PASSWORD" | tr -d '\r\n')
+          GNUPGHOME=$(mktemp -d)
+          export GNUPGHOME
+          printf '%s\n' "$KEY" | gpg --batch --import >/dev/null 2>&1
+          if ! printf 'verify' | gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "$PASS" --sign -o /dev/null - >/dev/null 2>&1; then
+            echo "::error::SIGNING_IN_MEMORY_KEY or SIGNING_IN_MEMORY_KEY_PASSWORD is invalid (bad passphrase or corrupted key)."
+            exit 1
+          fi
+          {
+            echo "ORG_GRADLE_PROJECT_signingInMemoryKey<<__SIGNING_KEY__"
+            printf '%s\n' "$KEY"
+            echo "__SIGNING_KEY__"
+            echo "ORG_GRADLE_PROJECT_signingInMemoryKeyPassword=$PASS"
+          } >> "$GITHUB_ENV"
+
       # Published artifacts are immutable, so verify before uploading.
       - name: Check
         run: ./gradlew check --no-configuration-cache
@@ -90,8 +119,6 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
         run: |
           if [ -n "$VERSION" ]; then
             ./gradlew publishToMavenCentral -PprojectDoctorVersion="$VERSION" --no-configuration-cache
