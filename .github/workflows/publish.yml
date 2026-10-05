@@ -2,9 +2,8 @@ name: Publish
 
 on:
   release:
-    # `published` fires when a release (or pre-release) is actually published, including
-    # one promoted from a draft. `created` misses that promotion entirely and instead
-    # fires when a draft is *saved*, at which point the tag does not exist yet.
+    # `published` also fires when a draft is promoted; `created` would miss that and
+    # run before the tag exists.
     types: [published]
   workflow_dispatch:
     inputs:
@@ -13,21 +12,19 @@ on:
         required: false
         type: string
 
-# This job only reads the repository; the publish credentials come from secrets.
+# The job only reads the repo; credentials come from secrets.
 permissions:
   contents: read
 
-# Never let two publishes race for the same coordinates. Uploads are not cancelled
-# midway: a half-published release is worse than a queued one.
+# Never let two publishes race for the same coordinates.
 concurrency:
   group: publish
   cancel-in-progress: false
 
 jobs:
-  publish-artifactory:
+  publish-maven-central:
     runs-on: ubuntu-latest
-    # Gates the Artifactory secrets behind the environment's protection rules, so a
-    # `workflow_dispatch` from an arbitrary ref cannot publish unreviewed.
+    # Gate the Central Portal secrets behind this environment's protection rules.
     environment: publish
     steps:
       - name: Checkout
@@ -42,50 +39,62 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      # Without credentials the BandLab repository is never registered, so the publish
-      # task would not exist and Gradle would fail with an opaque "Task not found".
-      - name: Verify Artifactory credentials are configured
+      # Resolve the version once. Release events carry a tag; manual runs may pass
+      # `version`. If neither resolves, Gradle uses its default SNAPSHOT version.
+      - name: Determine version
+        id: version
         env:
-          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        run: |
-          if [ -z "$ARTIFACTORY_USERNAME" ] || [ -z "$ARTIFACTORY_PASSWORD" ]; then
-            echo "::error::ARTIFACTORY_USERNAME and ARTIFACTORY_PASSWORD secrets must both be set." \
-                 "Without them the BandLab repository is not registered and nothing can be published."
-            exit 1
-          fi
-
-      # A published artifact is immutable, so verify before uploading rather than
-      # relying on the release commit having passed the Build workflow.
-      - name: Check
-        run: ./gradlew check --no-configuration-cache
-
-      - name: Publish to BandLab Artifactory
-        env:
-          # Untrusted values reach the script through the environment, never through
-          # `${{ }}` interpolation: those are pasted into the script text before bash
-          # parses it, and a tag name may legally contain shell metacharacters.
+          # Pass untrusted values via env, not `${{ }}` interpolation, so a tag with
+          # shell metacharacters cannot inject into the script.
           INPUT_VERSION: ${{ inputs.version }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-          # Deliberately NOT ARTIFACTORY_URL: a single URL would force snapshots into the
-          # release repo. These two are selected by the version suffix.
-          ARTIFACTORY_SNAPSHOT_URL: ${{ secrets.ARTIFACTORY_SNAPSHOT_URL }}
-          ARTIFACTORY_RELEASE_URL: ${{ secrets.ARTIFACTORY_RELEASE_URL }}
-          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
         run: |
           VERSION="$INPUT_VERSION"
           if [ -z "$VERSION" ] && [ "$GITHUB_REF" != "${GITHUB_REF#refs/tags/v}" ]; then
             VERSION="${GITHUB_REF_NAME#v}"
           fi
-          # Catches release tags that are not v-prefixed, which the check above misses.
+          # Catch non-v-prefixed release tags, which the check above misses.
           if [ -z "$VERSION" ] && [ -n "$RELEASE_TAG" ]; then
             VERSION="${RELEASE_TAG#v}"
           fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           if [ -n "$VERSION" ]; then
-            echo "Publishing version $VERSION to Artifactory"
-            ./gradlew publishAllPublicationsToBandLabRepository -PprojectDoctorVersion="$VERSION" --no-configuration-cache
+            echo "Resolved version: $VERSION"
           else
-            echo "Publishing SNAPSHOT to Artifactory"
-            ./gradlew publishAllPublicationsToBandLabRepository --no-configuration-cache
+            echo "No version resolved; publishing the project's default SNAPSHOT version."
+          fi
+
+      # Fail fast with a named secret instead of an opaque 401 or an unsigned release.
+      - name: Verify credentials
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -z "$MAVEN_CENTRAL_USERNAME" ] || [ -z "$MAVEN_CENTRAL_PASSWORD" ]; then
+            echo "::error::MAVEN_CENTRAL_USERNAME and MAVEN_CENTRAL_PASSWORD secrets must both be set."
+            exit 1
+          fi
+          if [ -n "$VERSION" ] && [ "${VERSION}" != *-SNAPSHOT ] && [ -z "$SIGNING_KEY" ]; then
+            echo "::error::SIGNING_IN_MEMORY_KEY must be set to publish a release; Central rejects unsigned releases."
+            exit 1
+          fi
+
+      # Published artifacts are immutable, so verify before uploading.
+      - name: Check
+        run: ./gradlew check --no-configuration-cache
+
+      - name: Publish to Maven Central
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+        run: |
+          if [ -n "$VERSION" ]; then
+            ./gradlew publishToMavenCentral -PprojectDoctorVersion="$VERSION" --no-configuration-cache
+          else
+            ./gradlew publishToMavenCentral --no-configuration-cache
           fi

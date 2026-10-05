@@ -4,10 +4,11 @@
 
 **A Gradle plugin that lints your project structure.**
 
-Module conventions, forbidden dependencies, leaky `api` exposure — checked as part of the build,
+Module conventions, forbidden dependencies, leaky `api` exposure. All checked as part of the build,
 so structural rules are enforced instead of remembered.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE.txt)
+[![Maven Central](https://img.shields.io/maven-central/v/com.bandlab/project-doctor.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.bandlab/project-doctor)
 
 Configuration Cache · Isolated Projects · **Battle-tested** on a 1600+ modules project.
 
@@ -124,7 +125,7 @@ Run it:
 
 ```
 ========================= Project Doctor Report =========================
-| ** feature should not directly depend on org.json — use wrapper **
+| ** feature should not directly depend on org.json; use wrapper **
 | - ⚠️  :feature:home has dependency with name contains "json" (org.json:json)
 |
 | ** Guava must not be exposed via api **
@@ -150,7 +151,7 @@ _(Real output from [`sample/`](sample/), abridged to fit.)_
 | `doctorCheck`            | per subproject | Evaluates rules for that module                                     | `build/doctor/<path>/result.json`, `checkstyle.xml` |
 | `doctorCheck`            | root           | Merges every module's JSON, filters the baseline, prints the report | `build/doctor/merged.json`                          |
 | `doctorGenerateBaseline` | root           | Regenerates the baseline from current violations                    | `doctor-baseline.json`                              |
-| `doctorValidate`         | per subproject | Sanity-checks that composition data resolved correctly              | —                                                   |
+| `doctorValidate`         | per subproject | Sanity-checks that composition data resolved correctly              | none                                                |
 
 ### Gradle Properties
 
@@ -161,7 +162,7 @@ _(Real output from [`sample/`](sample/), abridged to fit.)_
 | `PROJECT_DOCTOR_AGGR_ALWAYS_ENABLE` | `false` | Always configure the root aggregation task, instead of only when `doctorCheck`/`doctorGenerateBaseline` was requested |
 
 Each is enabled by setting it to `true`. Values resolve in this order: **environment variable** →
-**`local.properties`** (at the root project) → **Gradle property** — so any of these work:
+**`local.properties`** (at the root project) → **Gradle property**. Any of these work:
 
 ```bash
 ./gradlew doctorCheck -PPROJECT_DOCTOR_DISABLE_ON_SYNC=true    # gradle property
@@ -180,7 +181,7 @@ export PROJECT_DOCTOR_DISABLE_ON_SYNC=true                     # environment var
 A rule reads as one sentence: **select** projects → optionally **exclude** some → assert what is
 **forbidden**.
 
-### Selectors — which projects to check
+### Selectors: which projects to check
 
 ```kotlin
 projectWith { /* match by name or applied plugin */ }
@@ -201,7 +202,7 @@ allProjects()
 > Selector `plugin(...)` takes a **version catalog accessor** (`libs.plugins.…`), not a plain
 > string. To match a plugin by its string id, use a rule-side `id("...")` instead.
 
-### Exclusions — carve out the exceptions
+### Exclusions: carve out the exceptions
 
 ```kotlin
 .withExclusion {
@@ -223,7 +224,7 @@ allProjects()
 Matchers are **OR** by default. A project is excluded if any one matches. Wrap them in
 `matchAll { }` when you need all of them to match.
 
-### Rules — what is forbidden
+### Rules: what is forbidden
 
 | Rule                                | Fails when…                                                  | Accepts                                                                                                |
 | ----------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
@@ -232,7 +233,7 @@ Matchers are **OR** by default. A project is excluded if any one matches. Wrap t
 | `thatHasDependencyWith { ... }`     | the project declares a matching dependency                   | `name`, `nameContains`, `nameEndsWith`, `plugin`, `excludes`, `excludeContains`, `excludeProjects { }` |
 | `thatTransitivelyExpose { ... }`    | the module leaks a dependency through `api()`                | `library(libs.x)`, `name`, `nameContains`, `nameEndsWith`                                              |
 | `thatNamedWith { ... }`             | the project name matches the condition                       | `nameContains`, `nameDoesNotContain`                                                                   |
-| `reportAs("{{PATH}} …")`            | always — reports the selected projects with a custom message | `{{PATH}}` placeholder                                                                                 |
+| `reportAs("{{PATH}} …")`            | always: reports the selected projects with a custom message  | `{{PATH}}` placeholder                                                                                 |
 
 For example, forbidding a dependency everywhere except a few grandfathered modules:
 
@@ -249,7 +250,7 @@ errorOn("features must not use org.json directly") {
 
 ### Severity
 
-`errorOn { }` fails the build. `warnOn { }` reports without failing — ideal for staging a new rule
+`errorOn { }` fails the build. `warnOn { }` reports without failing, ideal for staging a new rule
 before you enforce it.
 
 ---
@@ -261,7 +262,7 @@ A baseline records the current ones so you can enforce the rule from today onwar
 
 ```bash
 ./gradlew doctorGenerateBaseline   # snapshot the current violations
-./gradlew doctorCheck              # passes — new violations still fail
+./gradlew doctorCheck              # passes; new violations still fail
 ```
 
 Recorded violations are filtered out of subsequent runs, anything new fails the build.
@@ -301,12 +302,51 @@ See [`sample/README.md`](sample/README.md) for the module graph and the rules it
 
 ### Publishing
 
-Releases go out via the [`Publish` workflow](.github/workflows/publish.yml) — triggered on a GitHub
-release, or manually through `workflow_dispatch` with a version.
+Artifacts are published to [Maven Central](https://central.sonatype.com/) via the Sonatype Central
+Portal (`com.vanniktech.maven.publish`), so consumers need only `mavenCentral()`:
 
-The version comes from `-PprojectDoctorVersion` (default `0.1.0-SNAPSHOT`); a `-SNAPSHOT` suffix
-routes to the snapshot repository automatically. Remote repositories are only registered when their
-credentials are present, so local builds work unconfigured.
+```kotlin
+plugins {
+    id("com.bandlab.project.doctor") version "0.0.1"
+}
+```
+
+Releases go out via the [`Publish` workflow](.github/workflows/publish.yml), triggered on a GitHub
+release or manually through `workflow_dispatch` with a version. `automaticRelease` publishes the
+deployment as soon as Central validates it.
+
+One-time setup on the Central Portal:
+
+- Verify the `com.bandlab` namespace.
+- Generate a Portal user token (not the login password) for `MAVEN_CENTRAL_*`.
+- Upload a GPG public key to a keyserver:
+  `gpg --keyserver keyserver.ubuntu.com --send-keys <KEY_ID>`.
+  Releases must be signed; snapshots are exempt.
+
+Required secrets (behind the `publish` environment):
+
+| Secret | Env var (maps to Gradle property) | Description |
+| ------ | --------------------------------- | ----------- |
+| `MAVEN_CENTRAL_USERNAME` / `MAVEN_CENTRAL_PASSWORD` | `ORG_GRADLE_PROJECT_mavenCentralUsername` / `...Password` | Central Portal user token |
+| `SIGNING_IN_MEMORY_KEY` (+ optional `SIGNING_IN_MEMORY_KEY_PASSWORD`) | `ORG_GRADLE_PROJECT_signingInMemoryKey` (+ `...Password`) | ASCII-armored GPG private key (`gpg --export-secret-keys --armor`) |
+
+The version comes from `-PprojectDoctorVersion` (default `0.1.0-SNAPSHOT`). The workflow derives it
+from the release tag (stripping a leading `v`) or the manual `version` input, and refuses to publish
+an unsigned release.
+
+Locally, put the same properties (no prefix) in `~/.gradle/gradle.properties`:
+
+```properties
+mavenCentralUsername=...
+mavenCentralPassword=...
+signingInMemoryKey=...
+signingInMemoryKeyPassword=...
+```
+
+Then `./gradlew publishToMavenCentral` for the default `0.1.0-SNAPSHOT`, or add
+`-PprojectDoctorVersion=0.2.0` for a release. Useful local checks:
+`./gradlew checkSigningConfiguration` (public key reachable from Central's keyservers) and
+`./gradlew publishToMavenLocal` (dry run, no credentials).
 
 ## Contributing
 

@@ -34,7 +34,7 @@ projectDoctor {
     // 4. Demo custom message template ({{PATH}} placeholder)
     warnOn {
         projectWith { nameContains(":feature:") }
-            .reportAs("{{PATH}} is a feature module — review naming")
+            .reportAs("{{PATH}} is a feature module; review naming")
     }
 
     // 4b. Demo name rule: all feature paths contain "feature" -> warn (shows NameRule)
@@ -44,8 +44,8 @@ projectDoctor {
     }
 
     // 5. Demo thatHasDependencyWith: forbid direct json usage in feature modules
-    //    (to showcase HasDependencyRule — note this uses nameContains, not library)
-    warnOn("feature should not directly depend on org.json — use wrapper") {
+    //    (to showcase HasDependencyRule; note this uses nameContains, not library)
+    warnOn("feature should not directly depend on org.json; use wrapper") {
         projectWith { nameContains(":feature:") }
             .thatHasDependencyWith { nameContains("json") }
     }

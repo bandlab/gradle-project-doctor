@@ -1,4 +1,4 @@
-# Project Doctor — Sample
+# Project Doctor Sample
 
 Sample multi-module Gradle project that dogfoods `com.bandlab.project.doctor` via composite build.
 
@@ -40,14 +40,14 @@ pluginManagement {
 }
 ```
 
-`sample/build.gradle.kts` (root) — registers the aggregation task and holds the rules:
+`sample/build.gradle.kts` (root), which registers the aggregation task and holds the rules:
 
 ```kotlin
 plugins { id("com.bandlab.project.doctor") }
 projectDoctor { baselineFile = file("doctor-baseline.json"); errorOn { ... } }
 ```
 
-Each module's own build file — registers `doctorPopulate` / `doctorCheck`:
+Each module's own build file registers `doctorPopulate` / `doctorCheck`:
 
 ```kotlin
 plugins {
@@ -61,7 +61,7 @@ configuration block breaks Isolated Projects on its own, regardless of which plu
 so the sample avoids one. In a real build you would put the `id(...)` in a convention plugin and
 write it once. Empty container projects (`:common`, `:feature`) simply don't apply it.
 
-This uses **composite build** — no `mavenLocal` publish needed. For published artifact usage, replace `includeBuild("..")` with `mavenCentral()` + version.
+This uses **composite build**, so no `mavenLocal` publish is needed. For published artifact usage, replace `includeBuild("..")` with `mavenCentral()` + version.
 
 ## Configuration Cache & Isolated Projects
 
@@ -79,14 +79,14 @@ Runs report `Configuration cache entry stored` / `reused` with no problems.
 From repo root:
 
 ```bash
-# 1. Check — fails fast on first error-level violation (subproject doctorCheck stops)
+# 1. Check: fails fast on first error-level violation (subproject doctorCheck stops)
 ./gradlew -p sample doctorCheck
 # Subproject failure example: :common:utils:doctorCheck → Guava api violation
 
-# 2. Summary at leaf — never fails, writes result.json (no console throw)
+# 2. Summary at leaf: never fails, writes result.json (no console throw)
 ./gradlew -p sample :feature:home:doctorCheck --summary
 
-# 3. Aggregation with violations — fails at :doctorCheck (root) but prints merged report
+# 3. Aggregation with violations: fails at :doctorCheck (root) but prints merged report
 #    (--summary on leaf prevents leaf failure, root still reports errors)
 ./gradlew -p sample doctorCheck --summary
 cat sample/build/doctor/merged.json
