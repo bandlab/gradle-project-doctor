@@ -64,6 +64,10 @@ pluginManagement {
         gradlePluginPortal()
         mavenCentral()
     }
+    // Declare the version once here, then apply the plugin versionless anywhere.
+    plugins {
+        id("com.bandlab.project.doctor") version "0.0.1"
+    }
 }
 ```
 
@@ -80,6 +84,8 @@ plugins {
     id("com.bandlab.project.doctor")
 }
 ```
+
+(A version catalog works too, e.g. `alias(libs.plugins.projectDoctor)`.)
 
 **Requirements:** Gradle with Kotlin DSL. Developed and tested against **Gradle 9.5.1**, Kotlin
 Gradle Plugin `2.4.10`, and Android Gradle Plugin `9.3.1`.
@@ -321,7 +327,11 @@ One-time setup on the Central Portal:
 - Generate a Portal user token (not the login password) for `MAVEN_CENTRAL_*`.
 - Upload a GPG public key to a keyserver:
   `gpg --keyserver keyserver.ubuntu.com --send-keys <KEY_ID>`.
-  Releases must be signed; snapshots are exempt.
+  Releases must be signed; snapshots skip signing and signing-key verification entirely.
+
+Configure the `publish` environment's deployment branch/tag restrictions and, if supported,
+required reviewers in GitHub repository settings. Merely naming the environment in the workflow
+does **not** protect its secrets from workflows on arbitrary refs.
 
 Required secrets (behind the `publish` environment):
 
@@ -345,7 +355,8 @@ signingInMemoryKeyPassword=...
 
 Then `./gradlew publishToMavenCentral` for the default `0.1.0-SNAPSHOT`, or add
 `-PprojectDoctorVersion=0.2.0` for a release. Useful local checks:
-`./gradlew checkSigningConfiguration` (public key reachable from Central's keyservers) and
+`./gradlew checkSigningConfiguration -PprojectDoctorVersion=0.2.0`
+(release public key reachable from Central's keyservers) and
 `./gradlew publishToMavenLocal` (dry run, no credentials).
 
 ## Contributing

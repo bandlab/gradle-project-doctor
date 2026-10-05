@@ -18,4 +18,6 @@ jobs:
           distribution: zulu
           java-version: ${{ matrix.java }}
       - uses: gradle/actions/setup-gradle@v6
+      - name: Test publishing workflow
+        run: python3 -B .github/tests/test_publish_workflow.py
       - run: ./gradlew check --no-configuration-cache

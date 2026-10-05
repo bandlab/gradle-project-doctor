@@ -76,9 +76,9 @@ mavenPublishing {
     // Releases publish automatically once Central validates the deployment.
     publishToMavenCentral(automaticRelease = true)
 
-    // Sign only when a key is configured, so local builds work unconfigured.
-    // Snapshots may be unsigned; Central rejects unsigned releases.
-    if (prop("signingInMemoryKey") != null) {
+    // Snapshots never need signing, even if local/CI signing credentials are configured.
+    // Sign releases when a key is configured; Central rejects unsigned releases.
+    if (!version.toString().endsWith("-SNAPSHOT") && prop("signingInMemoryKey") != null) {
         signAllPublications()
     }
 }

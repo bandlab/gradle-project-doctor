@@ -61,7 +61,16 @@ configuration block breaks Isolated Projects on its own, regardless of which plu
 so the sample avoids one. In a real build you would put the `id(...)` in a convention plugin and
 write it once. Empty container projects (`:common`, `:feature`) simply don't apply it.
 
-This uses **composite build**, so no `mavenLocal` publish is needed. For published artifact usage, replace `includeBuild("..")` with `mavenCentral()` + version.
+This uses a **composite build**, so no `mavenLocal` publish is needed. To consume the published
+artifact instead, remove `includeBuild("..")` and declare the plugin version in `pluginManagement`,
+since a versionless `id("com.bandlab.project.doctor")` cannot resolve from `mavenCentral()` alone:
+
+```kotlin
+pluginManagement {
+  repositories { gradlePluginPortal(); mavenCentral(); google() }
+  plugins { id("com.bandlab.project.doctor") version "0.0.1" }
+}
+```
 
 ## Configuration Cache & Isolated Projects
 

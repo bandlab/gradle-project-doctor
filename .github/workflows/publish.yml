@@ -24,7 +24,8 @@ concurrency:
 jobs:
   publish-maven-central:
     runs-on: ubuntu-latest
-    # Gate the Central Portal secrets behind this environment's protection rules.
+    # Uses environment secrets. Configure protection rules separately in GitHub;
+    # declaring an environment here does not restrict refs or require approval.
     environment: publish
     steps:
       - name: Checkout
@@ -76,10 +77,17 @@ jobs:
             echo "::error::MAVEN_CENTRAL_USERNAME and MAVEN_CENTRAL_PASSWORD secrets must both be set."
             exit 1
           fi
-          if [ -n "$VERSION" ] && [ "${VERSION}" != *-SNAPSHOT ] && [ -z "$SIGNING_KEY" ]; then
-            echo "::error::SIGNING_IN_MEMORY_KEY must be set to publish a release; Central rejects unsigned releases."
-            exit 1
-          fi
+          case "$VERSION" in
+            "" | *-SNAPSHOT)
+              # Default or snapshot version: no signing required.
+              ;;
+            *)
+              if [ -z "$SIGNING_KEY" ]; then
+                echo "::error::SIGNING_IN_MEMORY_KEY must be set to publish a release; Central rejects unsigned releases."
+                exit 1
+              fi
+              ;;
+          esac
 
       # A wrong passphrase fails later as an opaque BouncyCastle "checksum mismatch".
       # Verify it here, and strip CR / trailing newline that copy-paste or
@@ -88,10 +96,17 @@ jobs:
         env:
           SIGNING_KEY: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
+          case "$VERSION" in
+            "" | *-SNAPSHOT)
+              echo "Snapshot publication; skipping signing key verification."
+              exit 0
+              ;;
+          esac
           if [ -z "$SIGNING_KEY" ]; then
-            echo "No signing key configured; skipping."
-            exit 0
+            echo "::error::SIGNING_IN_MEMORY_KEY must be set to publish a release."
+            exit 1
           fi
           KEY=$(printf '%s' "$SIGNING_KEY" | tr -d '\r')
           PASS=$(printf '%s' "$SIGNING_PASSWORD" | tr -d '\r\n')
