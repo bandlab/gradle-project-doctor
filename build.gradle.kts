@@ -46,7 +46,7 @@ mavenPublishing {
         name.set("Project Doctor")
         description.set("Gradle plugin to lint multi-module project structure")
         inceptionYear.set("2025")
-        url.set("https://github.com/bandlab/project-doctor")
+        url.set("https://github.com/bandlab/gradle-project-doctor")
         licenses {
             license {
                 name.set("Apache License, Version 2.0")
@@ -65,9 +65,9 @@ mavenPublishing {
             }
         }
         scm {
-            url.set("https://github.com/bandlab/project-doctor")
-            connection.set("scm:git:git://github.com/bandlab/project-doctor.git")
-            developerConnection.set("scm:git:ssh://git@github.com/bandlab/project-doctor.git")
+            url.set("https://github.com/bandlab/gradle-project-doctor")
+            connection.set("scm:git:git://github.com/bandlab/gradle-project-doctor.git")
+            developerConnection.set("scm:git:ssh://git@github.com/bandlab/gradle-project-doctor.git")
         }
     }
 
