@@ -1,12 +1,12 @@
 # Project Doctor Sample
 
-Sample multi-module Gradle project that dogfoods `com.bandlab.project.doctor` via composite build.
+Sample multi-module Gradle project that dogfoods `com.bandlab.project.doctor`.
 
 ## Structure
 
 ```
 sample/
-  settings.gradle.kts          # pluginManagement { includeBuild("..") }
+  settings.gradle.kts          # plugin version + repos (uncomment includeBuild for local dev)
   build.gradle.kts             # root: projectDoctor { ... } rules
   gradle/libs.versions.toml
   doctor-baseline.json         # baseline for suppressed violations
@@ -31,14 +31,8 @@ sample/
 
 ## How the Plugin Is Applied
 
-`sample/settings.gradle.kts`:
-
-```kotlin
-pluginManagement {
-  includeBuild("..") // publishes com.bandlab.project.doctor from root project
-  repositories { gradlePluginPortal(); mavenCentral(); google() }
-}
-```
+See [`settings.gradle.kts`](settings.gradle.kts) for the plugin version and repositories
+(`includeBuild("..")` is there, commented out, for local development).
 
 `sample/build.gradle.kts` (root), which registers the aggregation task and holds the rules:
 
@@ -61,16 +55,12 @@ configuration block breaks Isolated Projects on its own, regardless of which plu
 so the sample avoids one. In a real build you would put the `id(...)` in a convention plugin and
 write it once. Empty container projects (`:common`, `:feature`) simply don't apply it.
 
-This uses a **composite build**, so no `mavenLocal` publish is needed. To consume the published
-artifact instead, remove `includeBuild("..")` and declare the plugin version in `pluginManagement`,
-since a versionless `id("com.bandlab.project.doctor")` cannot resolve from `mavenCentral()` alone:
-
-```kotlin
-pluginManagement {
-  repositories { gradlePluginPortal(); mavenCentral(); google() }
-  plugins { id("com.bandlab.project.doctor") version "<latest_version>" }
-}
-```
+The sample consumes the published SNAPSHOT from Central snapshots (see `pluginManagement`
+in [`settings.gradle.kts`](settings.gradle.kts)), so no `mavenLocal` publish is needed.
+For local development against the working tree, uncomment `includeBuild("..")` there; the
+composite build then takes precedence over the published artifact. Note that a versionless
+`id("com.bandlab.project.doctor")` cannot resolve from repositories alone without the
+version declared in `pluginManagement`.
 
 ## Configuration Cache & Isolated Projects
 
