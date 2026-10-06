@@ -68,7 +68,7 @@ since a versionless `id("com.bandlab.project.doctor")` cannot resolve from `mave
 ```kotlin
 pluginManagement {
   repositories { gradlePluginPortal(); mavenCentral(); google() }
-  plugins { id("com.bandlab.project.doctor") version "0.0.1" }
+  plugins { id("com.bandlab.project.doctor") version "<latest_version>" }
 }
 ```
 

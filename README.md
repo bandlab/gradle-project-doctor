@@ -9,6 +9,7 @@ so structural rules are enforced instead of remembered.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE.txt)
 [![Maven Central](https://img.shields.io/maven-central/v/com.bandlab/project-doctor.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.bandlab/project-doctor)
+[![Latest release](https://img.shields.io/github/v/release/bandlab/gradle-project-doctor?label=latest)](https://github.com/bandlab/gradle-project-doctor/releases/latest)
 
 Configuration Cache · Isolated Projects · **Battle-tested** on a 1600+ modules project.
 
@@ -54,22 +55,27 @@ Originally built for BandLab Android (1600+ modules), now open source under Apac
 
 ---
 
-## Installation
+## Add to your project and use
+
+The simplest approach is to add the following:
 
 **`settings.gradle.kts`**
 
 ```kotlin
 pluginManagement {
     repositories {
-        gradlePluginPortal()
         mavenCentral()
+        gradlePluginPortal()
     }
-    // Declare the version once here, then apply the plugin versionless anywhere.
     plugins {
-        id("com.bandlab.project.doctor") version "0.0.1"
+        id("com.bandlab.project.doctor") version "<latest_version>"
     }
 }
 ```
+
+Replace `<latest_version>` with the `latest` version above, or check the
+[latest release](https://github.com/bandlab/gradle-project-doctor/releases/latest).
+Declare the version once here, then apply the plugin versionless anywhere.
 
 Then apply it to the root project **and** each module you want checked:
 
@@ -309,13 +315,8 @@ See [`sample/README.md`](sample/README.md) for the module graph and the rules it
 ### Publishing
 
 Artifacts are published to [Maven Central](https://central.sonatype.com/) via the Sonatype Central
-Portal (`com.vanniktech.maven.publish`), so consumers need only `mavenCentral()`:
-
-```kotlin
-plugins {
-    id("com.bandlab.project.doctor") version "0.0.1"
-}
-```
+Portal (`com.vanniktech.maven.publish`), so consumers need only `mavenCentral()`. See
+[Add to your project and use](#add-to-your-project-and-use) for the snippet.
 
 Releases go out via the [`Publish` workflow](.github/workflows/publish.yml), triggered on a GitHub
 release or manually through `workflow_dispatch` with a version. `automaticRelease` publishes the
