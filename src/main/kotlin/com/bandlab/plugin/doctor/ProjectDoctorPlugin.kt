@@ -142,7 +142,7 @@ class ProjectDoctorPlugin : Plugin<Project> {
             artifact(populateTask.flatMap { it.projectCompositionFile })
         }
 
-        // only direct project deps — avoids unwanted deps like desktop-variant KMP libs
+        // only direct project deps; avoids unwanted deps like desktop-variant KMP libs
         val doctorCompositionDeps = configurations.dependencyScope(DepsScope.COMPOSITION)
         val compositionResolvable = project.resolvable(
             name = ConfigurationSpec.doctorComposition,
@@ -182,7 +182,7 @@ class ProjectDoctorPlugin : Plugin<Project> {
             configure(extension, project)
         }
 
-        // summaryOnly baseline — same check, distinct outputs
+        // summaryOnly baseline; same check, distinct outputs
         val baselineTask = tasks.register<DoctorCheckTask>(TASK_BASELINE_GENERATE) {
             val extension = ProjectDoctorExtension.from(project)
             summaryOnly.set(true)

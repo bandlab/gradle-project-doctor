@@ -1,5 +1,5 @@
 plugins {
-    // Intentionally NOT kotlin-jvm — triggers "api modules must be Kotlin JVM" rule
+    // Intentionally NOT kotlin-jvm; triggers "api modules must be Kotlin JVM" rule
     `java-library`
     id("com.bandlab.project.doctor")
 }
