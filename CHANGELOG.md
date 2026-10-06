@@ -9,14 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Publishing target moved from BandLab Artifactory to Maven Central via the Sonatype
-  Central Portal (`com.vanniktech.maven.publish`). Consumers need only `mavenCentral()`;
-  see [Add to your project and use](README.md#add-to-your-project-and-use).
-- Reworked the `Publish` workflow: the version is resolved once from the release tag or
-  the manual `version` input, credentials are verified up front, and unsigned releases
-  are refused (Central rejects those). Snapshots keep publishing unsigned.
-- POM now carries the developer email, organization, and repository URLs that Central
-  requires. Removed the `TODO.md` and other obsolete Artifactory notes.
-- The `sample/` consumes the published `0.1.0-SNAPSHOT` by default; uncomment
-  `includeBuild("..")` in `sample/settings.gradle.kts` to develop against the working
-  tree instead.
+- Artifacts are now published to Maven Central instead of BandLab Artifactory, so
+  consumers need only `mavenCentral()`. See
+  [Add to your project and use](README.md#add-to-your-project-and-use).
