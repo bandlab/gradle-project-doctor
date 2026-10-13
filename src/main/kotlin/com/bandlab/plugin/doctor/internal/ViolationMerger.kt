@@ -18,6 +18,7 @@ internal class ViolationMerger {
             .groupBy { it.errorLevel }
 
         val baselineViolations = baselineFile
+            ?.takeIf { it.exists() }
             ?.createMessageGroups()
             .orEmpty()
             .groupBy { it.errorLevel }

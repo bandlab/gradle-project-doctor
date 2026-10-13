@@ -8,7 +8,6 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
@@ -28,8 +27,9 @@ abstract class DoctorCheckRootTask : DefaultTask() {
     abstract val jsonReportFiles: ConfigurableFileCollection
 
     @get:PathSensitive(PathSensitivity.NONE)
-    @get:InputFile
     @get:Optional
+    // @InputFiles tolerates a missing file, which is treated as an empty baseline
+    @get:InputFiles
     abstract val baselineFile: RegularFileProperty
 
     /**

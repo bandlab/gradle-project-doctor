@@ -25,6 +25,35 @@ dependencies {
     testImplementation(gradleTestKit())
 }
 
+// Build with JDK 25 but target Java 21, so consumers can run Gradle on Java 21+.
+// This also sets the published `org.gradle.jvm.version` attribute.
+val targetJvm = 21
+
+java {
+    targetCompatibility = JavaVersion.toVersion(targetJvm)
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(targetJvm)
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(targetJvm.toString()))
+        // Fail on JDK APIs newer than the target, not just on bytecode level
+        freeCompilerArgs.add("-Xjdk-release=$targetJvm")
+    }
+}
+
+// Optionally run tests (and the TestKit builds they start) on another JDK, e.g. -PtestJavaVersion=21
+prop("testJavaVersion")?.let { testJavaVersion ->
+    tasks.withType<Test>().configureEach {
+        javaLauncher.set(
+            javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(testJavaVersion)) }
+        )
+    }
+}
+
 tasks.withType<ValidatePlugins>().configureEach {
     failOnWarning.set(true)
     enableStricterValidation.set(true)

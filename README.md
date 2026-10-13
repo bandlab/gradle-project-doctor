@@ -24,7 +24,7 @@ As a modular codebase grows, architecture rules become increasingly important an
 Rules like:
 
 - `:api` modules must stay Kotlin/JVM-only
-- Nothing should depend directly on `:common:screen`
+- API and UI modules must not depend on screen modules
 - DI runtime dependencies must never leak through `api()`
 
 Today, these rules often live in tribal knowledge, documentation, or review comments. Over time, they drift.
@@ -35,7 +35,11 @@ Write down the rules that define how your project should be structured, and let 
 
 ```kotlin
 errorOn("Metro runtime must not be exposed via api") {
-    allProjects().thatTransitivelyExpose { library(libs.metro.runtime) }
+    allProjects().thatTransitivelyExpose {
+        library(libs.metro.runtime)                // version catalog entry
+        // or: name("dev.zacsweers.metro:runtime") // group:name coordinates
+        // or: nameContains("metro")               // substring match
+    }
 }
 ```
 
@@ -55,6 +59,14 @@ Originally built for BandLab Android (1600+ modules), now open source under Apac
 
 ---
 
+## Requirements
+
+- **Java 21 or newer for the JVM running Gradle.** This is the JVM shown as **Daemon JVM** in
+  `./gradlew --version`, not your modules' `jvmToolchain`. `0.2.0` still requires Java 25.
+- A compatible Gradle version. The repository wrapper is **9.8.0**. No lower Gradle minimum
+  has been established by a compatibility matrix.
+- Kotlin DSL or Groovy DSL. Examples below use Kotlin DSL, and the functional tests use Groovy.
+
 ## Add to your project and use
 
 The simplest approach is to add the following:
@@ -73,52 +85,65 @@ pluginManagement {
 }
 ```
 
-Replace `<latest_version>` with the `latest` version above, or check the
+Replace `<latest_version>` with the version shown above or check the
 [latest release](https://github.com/bandlab/gradle-project-doctor/releases/latest).
+`0.2.0` is available on Maven Central, including the plugin marker.
 Declare the version once here, then apply the plugin versionless anywhere.
 
 Then apply it to the root project **and** each module you want checked:
 
-```kotlin
-// root build.gradle.kts, registers the aggregation task + the rules DSL
-plugins {
-    id("com.bandlab.project.doctor")
-}
+**Root `build.gradle.kts`**
 
-// each module's build.gradle.kts, registers doctorPopulate / doctorCheck
+```kotlin
+// Registers aggregation tasks + the rules DSL
 plugins {
     id("com.bandlab.project.doctor")
 }
 ```
 
-(A version catalog works too, e.g. `alias(libs.plugins.projectDoctor)`.)
+**Each checked module's `build.gradle.kts`**
 
-**Requirements:** Gradle with Kotlin DSL. Developed and tested against **Gradle 9.5.1**, Kotlin
-Gradle Plugin `2.4.10`, and Android Gradle Plugin `9.3.1`.
+```kotlin
+// Registers doctorPopulate / doctorCheck alongside your usual JVM or Android plugins
+plugins {
+    id("com.bandlab.project.doctor")
+}
+```
+
+Keep the module's existing JVM or Android plugins, which provide its runtime classpath.
+Skip empty container projects. Apply Project Doctor per module or through a convention plugin,
+not a cross-project `subprojects { }` block when using Isolated Projects.
+
+(A version catalog works too, e.g. `alias(libs.plugins.projectDoctor)`.)
 
 ## Quickstart
 
-Declare your architecture rules once, in the root project:
+These rules are adapted from BandLab Android: keep most API modules Kotlin/JVM-only,
+prevent API/UI modules from depending on screens, and keep the DI runtime out of public APIs.
+The examples use `libs` aliases from an existing version catalog. Adapt the aliases and module
+suffixes to your build.
+
+Declare the rules once, in the **root `build.gradle.kts`**:
 
 ```kotlin
 // root build.gradle.kts
 projectDoctor {
-    baselineFile = file("doctor-baseline.json")
-
-    // 1. Convention: :api modules must be Kotlin JVM only
-    errorOn("api modules must be Kotlin JVM") {
+    // 1. Android-specific APIs are explicitly named :android:api
+    errorOn("api modules must be Kotlin JVM unless named :android:api") {
         projectWith { nameEndsWith(":api") }
-            .thatHasPluginWith { alias(libs.plugins.android.library) }
+            .withExclusion { nameEndsWith(":android:api") }
+            .thatDoesNotHavePluginWith { id("org.jetbrains.kotlin.jvm") }
     }
 
-    // 2. Indirection: go through the convention plugin, not a direct dependency
-    errorOn("Use plugins.screen instead of :common:android:screen dep") {
-        projectWithDependency { dependency(":common:android:screen") }
-            .withExclusion { path(":app") }
-            .thatDoesNotHavePluginWith { alias(bandlab.plugins.screen) }
+    // 2. Screen implementations must not leak into API or shared UI modules
+    errorOn("api and ui modules must not depend on screen modules") {
+        projectWith { nameEndsWith(":api") }
+            .thatHasDependencyWith { nameEndsWith(":screen") }
+        projectWith { nameEndsWith(":ui") }
+            .thatHasDependencyWith { nameEndsWith(":screen") }
     }
 
-    // 3. API hygiene: the DI runtime must not leak transitively
+    // 3. Keep the DI runtime as an implementation detail
     errorOn("Metro runtime must not be exposed via api") {
         allProjects()
             .thatTransitivelyExpose { library(libs.metro.runtime) }
@@ -130,8 +155,10 @@ Run it:
 
 ```bash
 ./gradlew doctorCheck                 # fail the build on error-level violations
-./gradlew doctorGenerateBaseline      # (re)generate doctor-baseline.json
+./gradlew doctorCheck --summary       # let module checks finish, then fail at the root if needed
 ```
+
+Already have violations you can't fix yet? See [Baselines](#-baselines).
 
 ### What you get
 
@@ -157,13 +184,17 @@ _(Real output from [`sample/`](sample/), abridged to fit.)_
 
 ### Tasks
 
-| Task                     | Scope          | Description                                                         | Output                                              |
-| ------------------------ | -------------- | ------------------------------------------------------------------- | --------------------------------------------------- |
-| `doctorPopulate`         | per subproject | Snapshots `ProjectComposition` for the module                       | `build/doctor/<path>/project_composition.json`      |
-| `doctorCheck`            | per subproject | Evaluates rules for that module                                     | `build/doctor/<path>/result.json`, `checkstyle.xml` |
-| `doctorCheck`            | root           | Merges every module's JSON, filters the baseline, prints the report | `build/doctor/merged.json`                          |
-| `doctorGenerateBaseline` | root           | Regenerates the baseline from current violations                    | `doctor-baseline.json`                              |
-| `doctorValidate`         | per subproject | Sanity-checks that composition data resolved correctly              | none                                                |
+| Task                     | Scope          | Description                                                          | Output                                     |
+| ------------------------ | -------------- | -------------------------------------------------------------------- | ------------------------------------------ |
+| `doctorPopulate`         | per subproject | Snapshots `ProjectComposition` for the module                        | `project_composition.json`                 |
+| `doctorCheck`            | per subproject | Evaluates rules for that module                                      | `result.json`, `checkstyle.xml`            |
+| `doctorCheck`            | root           | Merges every module's JSON, filters the baseline, prints the report  | `build/doctor/merged.json`                 |
+| `doctorGenerateBaseline` | root           | Regenerates the configured baseline from current violations          | configured `baselineFile`                  |
+| `doctorValidate`         | per subproject | Sanity-checks that composition data resolved correctly               | none                                       |
+
+Module reports are written to `<root>/build/doctor/<module-dir>/`. Treat the console output and
+task outcome as the result of a run. See [docs/reports.md](docs/reports.md) for where each report
+is written and when it is generated.
 
 ### Gradle Properties
 
@@ -184,14 +215,16 @@ export PROJECT_DOCTOR_DISABLE_ON_SYNC=true                     # environment var
 
 ### Task Arguments
 
-| Argument  | Default | Effect                                                                                                 |
-| --------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| `summary` | off     | On a **module** task, report violations without failing that module, it will be summarized at the end. |
+| Argument    | Default | Effect                                                                                   |
+| ----------- | ------- | ---------------------------------------------------------------------------------------- |
+| `--summary` | off     | Module checks don't fail, so every module reports. The root still fails on non-baselined errors. |
+
+Use `doctorCheck --summary`, not `:doctorCheck --summary`, which only reaches the root task.
 
 ## Rules DSL
 
-A rule reads as one sentence: **select** projects → optionally **exclude** some → assert what is
-**forbidden**.
+A rule reads as one sentence: **select** projects → optionally **exclude** some → define a
+violation (including a missing required plugin).
 
 ### Selectors: which projects to check
 
@@ -208,11 +241,25 @@ allProjects()
 | `nameEndsWith("...")`        | `projectWith { nameEndsWith(":api") }`                           |
 | `nameDoesNotContains("...")` | `projectWith { nameDoesNotContains(":test") }`                   |
 | `plugin(...)`                | `projectWith { plugin(libs.plugins.kotlin.jvm) }`                |
-| `dependency("...")`          | `projectWithDependency { dependency(":common:android:screen") }` |
-| `library(...)`               | `projectWithDependency { library(libs.metro.runtime) }`          |
+| `dependency("...")`          | `projectWithDependency { dependency(":common:screen") }` |
+| `library(...)`               | `projectWithDependency { library(libs.guava) }`          |
 
 > Selector `plugin(...)` takes a **version catalog accessor** (`libs.plugins.…`), not a plain
 > string. To match a plugin by its string id, use a rule-side `id("...")` instead.
+
+Catalog examples require entries in your own `gradle/libs.versions.toml`. For example:
+
+```toml
+[libraries]
+guava = { module = "com.google.guava:guava", version = "32.1.2-jre" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.1.20" }
+android-application = { id = "com.android.application", version = "9.3.1" }
+```
+
+These are example catalog versions, not minimum supported versions. String dependency matching
+uses project paths (`:common:screen`) or external `group:name` coordinates, without versions.
 
 ### Exclusions: carve out the exceptions
 
@@ -245,17 +292,17 @@ Matchers are **OR** by default. A project is excluded if any one matches. Wrap t
 | `thatHasDependencyWith { ... }`     | the project declares a matching dependency                   | `name`, `nameContains`, `nameEndsWith`, `plugin`, `excludes`, `excludeContains`, `excludeProjects { }` |
 | `thatTransitivelyExpose { ... }`    | the module leaks a dependency through `api()`                | `library(libs.x)`, `name`, `nameContains`, `nameEndsWith`                                              |
 | `thatNamedWith { ... }`             | the project name matches the condition                       | `nameContains`, `nameDoesNotContain`                                                                   |
-| `reportAs("{{PATH}} …")`            | always: reports the selected projects with a custom message  | `{{PATH}}` placeholder                                                                                 |
+| `reportAs("{{PATH}} …")`            | always: reports the selected projects with a custom message  | `{{PATH}}`, `{{PLUGINS}}` (observed plugin IDs) placeholders                                           |
 
-For example, forbidding a dependency everywhere except a few grandfathered modules:
+For example, forbidding a dependency in feature modules except a grandfathered module:
 
 ```kotlin
 errorOn("features must not use org.json directly") {
     projectWith { nameContains(":feature:") }
+        .withExclusion { path(":feature:legacy") }  // grandfathered module
         .thatHasDependencyWith {
             nameContains("json")
-            excludeContains("moshi")            // ignore these dependencies
-            excludeProjects { path(":feature:legacy") }
+            excludeContains("moshi")                // ignore these dependencies
         }
 }
 ```
@@ -272,37 +319,57 @@ before you enforce it.
 Introducing a structural rule to an existing codebase usually surfaces a lot of violations at once.
 A baseline records the current ones so you can enforce the rule from today onward:
 
+First configure `baselineFile = file("doctor-baseline.json")` in the root `projectDoctor` block.
+There is no default baseline path. Generation replaces the file with all current violations,
+including warnings. Review and commit the result. A missing baseline file is treated as empty
+(in `0.2.0`, create it with `[]` first).
+
 ```bash
 ./gradlew doctorGenerateBaseline   # snapshot the current violations
 ./gradlew doctorCheck              # passes; new violations still fail
 ```
 
-Recorded violations are filtered out of subsequent runs, anything new fails the build.
+Recorded violations are filtered by exact message and severity. New error-level violations fail
+the build, while new warnings are reported without failure. Changing a rule's message can make
+an existing violation count as new. `--summary` module JSON remains unfiltered, but root checks
+still apply the baseline.
 
 ---
 
 ## How It Works
 
 ```
-subprojects                             root
-──────────                              ────
-doctorPopulate ──► project_composition.json ──┐
-                                              ├─► DoctorChecker ─┬─► merged.json
-doctorCheck ─────► result.json ───────────────┘                  ├─► checkstyle.xml
-                   (aggregated via DoctorCheckAttr                └─► console report
-                    variant-aware configurations)
+module
+──────
+doctorPopulate ──► project_composition.json
+                          │ (plus direct dependencies' compositions)
+                          ▼
+doctorCheck ──► rule evaluation ─┬─► result.json ──► root via DoctorCheckAttr
+                               └─► console + checkstyle.xml (non-summary only)
+
+root                 doctorCheck ◄── module result.json files
+────                      │
+                          └─► merge + baseline filter
+                                      ├─► merged.json (non-empty results)
+                                      └─► console + fail on remaining errors
 ```
 
 Aggregation rides Gradle's dependency resolution: each module publishes its report on a
 `consumable` configuration tagged with the `DoctorCheckAttr` attribute, and the root resolves them
-through a matching `resolvable` configuration. That is what makes the plugin parallel-friendly,
-incremental, and safe under Isolated Projects.
+through a matching `resolvable` configuration. Normal module checks apply the baseline before
+reporting and can fail before aggregation. Summary checks allow aggregation to finish, but do
+not turn root errors into warnings.
+
+The sample enables Configuration Cache and Isolated Projects. Configuration-cache reuse is
+separate from build-cache reuse: check, aggregation, and baseline tasks are explicitly untracked
+and run again rather than being restored from the build cache.
 
 ---
 
 ## Sample
 
-A runnable multi-module sample lives in [`sample/`](sample/).
+A runnable multi-module sample lives in [`sample/`](sample/). It consumes released **0.2.0**
+by default.
 
 ```bash
 ./gradlew -p sample doctorCheck             # fails on the intentional violations
@@ -312,61 +379,12 @@ A runnable multi-module sample lives in [`sample/`](sample/).
 
 See [`sample/README.md`](sample/README.md) for the module graph and the rules it exercises.
 
-### Publishing
-
-Artifacts are published to [Maven Central](https://central.sonatype.com/) via the Sonatype Central
-Portal (`com.vanniktech.maven.publish`), so consumers need only `mavenCentral()`. See
-[Add to your project and use](#add-to-your-project-and-use) for the snippet.
-
-Releases go out via the [`Publish` workflow](.github/workflows/publish.yml), triggered on a GitHub
-release or manually through `workflow_dispatch` with a version. `automaticRelease` publishes the
-deployment as soon as Central validates it.
-
-One-time setup on the Central Portal:
-
-- Verify the `com.bandlab` namespace.
-- Generate a Portal user token (not the login password) for `MAVEN_CENTRAL_*`.
-- Upload a GPG public key to a keyserver:
-  `gpg --keyserver keyserver.ubuntu.com --send-keys <KEY_ID>`.
-  Releases must be signed; snapshots skip signing and signing-key verification entirely.
-
-Configure the `publish` environment's deployment branch/tag restrictions and, if supported,
-required reviewers in GitHub repository settings. Merely naming the environment in the workflow
-does **not** protect its secrets from workflows on arbitrary refs.
-
-Required secrets (behind the `publish` environment):
-
-| Secret | Env var (maps to Gradle property) | Description |
-| ------ | --------------------------------- | ----------- |
-| `MAVEN_CENTRAL_USERNAME` / `MAVEN_CENTRAL_PASSWORD` | `ORG_GRADLE_PROJECT_mavenCentralUsername` / `...Password` | Central Portal user token |
-| `SIGNING_IN_MEMORY_KEY` (+ optional `SIGNING_IN_MEMORY_KEY_PASSWORD`) | `ORG_GRADLE_PROJECT_signingInMemoryKey` (+ `...Password`) | ASCII-armored GPG private key (`gpg --export-secret-keys --armor`) |
-
-The version comes from `-PprojectDoctorVersion` (default `0.1.0-SNAPSHOT`). The workflow derives it
-from the release tag (stripping a leading `v`) or the manual `version` input, and refuses to publish
-an unsigned release.
-
-Locally, put the same properties (no prefix) in `~/.gradle/gradle.properties`:
-
-```properties
-mavenCentralUsername=...
-mavenCentralPassword=...
-signingInMemoryKey=...
-signingInMemoryKeyPassword=...
-```
-
-Then `./gradlew publishToMavenCentral` for the default `0.1.0-SNAPSHOT`, or add
-`-PprojectDoctorVersion=0.2.0` for a release. Useful local checks:
-`./gradlew checkSigningConfiguration -PprojectDoctorVersion=0.2.0`
-(release public key reachable from Central's keyservers) and
-`./gradlew publishToMavenLocal` (dry run, no credentials).
-
 ## Contributing
 
-Issues and pull requests are welcome. The fastest way to demonstrate a bug is a failing case in
-[`sample/`](sample/) or a unit test under `src/test/kotlin`.
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for prerequisites,
+tests, and local sample development. Maintainers can find publishing instructions in
+[docs/releasing.md](docs/releasing.md).
 
 ## License
 
 **Apache 2.0** Copyright BandLab Technologies. See [`LICENSE.txt`](LICENSE.txt) for the full text.
-</content>
-</invoke>

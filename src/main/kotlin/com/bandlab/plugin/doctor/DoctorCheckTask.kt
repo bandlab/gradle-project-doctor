@@ -56,7 +56,8 @@ abstract class DoctorCheckTask : DefaultTask() {
 
     @get:PathSensitive(PathSensitivity.NONE)
     @get:Optional
-    @get:InputFile
+    // @InputFiles tolerates a missing file, which is treated as an empty baseline
+    @get:InputFiles
     abstract val baselineFile: RegularFileProperty
 
     @get:PathSensitive(PathSensitivity.NONE)

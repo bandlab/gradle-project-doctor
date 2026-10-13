@@ -45,7 +45,8 @@ abstract class HasDependencyConfigExtension @Inject constructor(factory: ObjectF
     /**
      * Exclude dependencies from rule check.
      *
-     * @param excludes list of complete dependency names to exclude (ex: bandlab.android.common:screen)
+     * @param excludes exact project paths or external `group:name` coordinates, without versions
+     * (for example, `:common:screen` or `com.google.guava:guava`)
      */
     fun excludes(vararg excludes: String) {
         this.excludedDependency.addAll(excludes.map { MatchableValue.Match(it) })
@@ -54,7 +55,7 @@ abstract class HasDependencyConfigExtension @Inject constructor(factory: ObjectF
     /**
      * Exclude dependencies from rule check.
      *
-     * @param excludes list of substring contained in dependency name to exclude (ex: screen)
+     * @param excludes substrings of dependency names to exclude (for example, `screen`)
      */
     fun excludeContains(vararg excludes: String) {
         this.excludedDependency.addAll(excludes.map { MatchableValue.Contains(it) })

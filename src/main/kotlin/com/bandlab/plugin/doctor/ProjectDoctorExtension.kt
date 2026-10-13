@@ -20,23 +20,28 @@ import java.io.Serializable
  * Example:
  * ```kotlin
  * projectDoctor {
- *   errorOn {
- *    projectWith { nameContains("api") } thatHasDependencyWith { nameContains("screen" }
+ *   baselineFile = file("doctor-baseline.json")
+ *
+ *   errorOn("api modules must apply Kotlin/JVM") {
+ *     projectWith { nameEndsWith(":api") }
+ *       .thatDoesNotHavePluginWith { id("org.jetbrains.kotlin.jvm") }
  *   }
  *
- *   warnOn {
- *    projectWith { plugin(bandlab.plugins.dagger.compiler.library) }
- *        .thatHasDependency(bandlab.plugins.library.kotlin)
+ *   warnOn("feature modules should not depend directly on org.json") {
+ *     projectWith { nameContains(":feature:") }
+ *       .thatHasDependencyWith { name("org.json:json") }
  *   }
  * }
- *```
+ * ```
  */
 open class ProjectDoctorExtension(factory: ObjectFactory) : ErrorLevelBuilderExtension {
 
     override val objectFactory: ObjectFactory = factory
 
     /**
-     * The baseline file that will be used to compare the doctor results.
+     * Optional baseline for filtering violations by exact message and severity during checks.
+     * Must be configured before running `doctorGenerateBaseline`, which replaces its contents.
+     * A missing file is treated as an empty baseline.
      */
     val baselineFile = factory.fileProperty()
 
