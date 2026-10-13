@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.internal.rules
 
 import com.bandlab.plugin.doctor.internal.models.ProjectComposition
@@ -12,14 +14,18 @@ class PluginRulesTest {
     @Test
     fun `HasPluginRule reports error when plugin is present`() {
         // given
-        val project = ProjectComposition(
-            path = ":feature:a",
-            plugins = setOf("com.android.library"),
-            dependencies = emptySet(),
-        )
-        val config = object : PluginRuleConfig() {
-            init { id("com.android.library") }
-        }
+        val project =
+            ProjectComposition(
+                path = ":feature:a",
+                plugins = setOf("com.android.library"),
+                dependencies = emptySet(),
+            )
+        val config =
+            object : PluginRuleConfig() {
+                init {
+                    id("com.android.library")
+                }
+            }
         val rule = HasPluginRule(config)
 
         // when
@@ -34,14 +40,18 @@ class PluginRulesTest {
     @Test
     fun `HasPluginRule does not report when plugin absent`() {
         // given
-        val project = ProjectComposition(
-            path = ":feature:a",
-            plugins = setOf("kotlin"),
-            dependencies = emptySet(),
-        )
-        val config = object : PluginRuleConfig() {
-            init { id("com.android.library") }
-        }
+        val project =
+            ProjectComposition(
+                path = ":feature:a",
+                plugins = setOf("kotlin"),
+                dependencies = emptySet(),
+            )
+        val config =
+            object : PluginRuleConfig() {
+                init {
+                    id("com.android.library")
+                }
+            }
         val rule = HasPluginRule(config)
 
         // when
@@ -59,14 +69,18 @@ class PluginRulesTest {
     @Test
     fun `NoPluginRule reports error when plugin is absent`() {
         // given
-        val project = ProjectComposition(
-            path = ":feature:a",
-            plugins = emptySet(),
-            dependencies = emptySet(),
-        )
-        val config = object : PluginRuleConfig() {
-            init { id("com.android.library") }
-        }
+        val project =
+            ProjectComposition(
+                path = ":feature:a",
+                plugins = emptySet(),
+                dependencies = emptySet(),
+            )
+        val config =
+            object : PluginRuleConfig() {
+                init {
+                    id("com.android.library")
+                }
+            }
         val rule = NoPluginRule(config)
 
         // when
@@ -81,14 +95,18 @@ class PluginRulesTest {
     @Test
     fun `NoPluginRule does not report when plugin present`() {
         // given
-        val project = ProjectComposition(
-            path = ":feature:a",
-            plugins = setOf("com.android.library"),
-            dependencies = emptySet(),
-        )
-        val config = object : PluginRuleConfig() {
-            init { id("com.android.library") }
-        }
+        val project =
+            ProjectComposition(
+                path = ":feature:a",
+                plugins = setOf("com.android.library"),
+                dependencies = emptySet(),
+            )
+        val config =
+            object : PluginRuleConfig() {
+                init {
+                    id("com.android.library")
+                }
+            }
         val rule = NoPluginRule(config)
 
         // when
@@ -106,14 +124,16 @@ class PluginRulesTest {
     @Test
     fun `NameRule reports when path matches all nameMatchers`() {
         // given
-        val project = ProjectComposition(
-            path = ":image:zoom:screen",
-            plugins = emptySet(),
-            dependencies = emptySet(),
-        )
-        val config = com.bandlab.plugin.doctor.rules.NameRuleConfig().apply {
-            nameContains("screen")
-        }
+        val project =
+            ProjectComposition(
+                path = ":image:zoom:screen",
+                plugins = emptySet(),
+                dependencies = emptySet(),
+            )
+        val config =
+            com.bandlab.plugin.doctor.rules.NameRuleConfig().apply {
+                nameContains("screen")
+            }
         val rule = NameRule(config)
 
         // when
@@ -127,14 +147,16 @@ class PluginRulesTest {
     @Test
     fun `NameRule does not report when path does not match`() {
         // given
-        val project = ProjectComposition(
-            path = ":common:utils",
-            plugins = emptySet(),
-            dependencies = emptySet(),
-        )
-        val config = com.bandlab.plugin.doctor.rules.NameRuleConfig().apply {
-            nameContains("screen")
-        }
+        val project =
+            ProjectComposition(
+                path = ":common:utils",
+                plugins = emptySet(),
+                dependencies = emptySet(),
+            )
+        val config =
+            com.bandlab.plugin.doctor.rules.NameRuleConfig().apply {
+                nameContains("screen")
+            }
         val rule = NameRule(config)
 
         // when
@@ -152,11 +174,12 @@ class PluginRulesTest {
     @Test
     fun `ErrorRule replaces placeholders and reports`() {
         // given
-        val project = ProjectComposition(
-            path = ":feature:a",
-            plugins = setOf("plugin.a", "plugin.b"),
-            dependencies = emptySet(),
-        )
+        val project =
+            ProjectComposition(
+                path = ":feature:a",
+                plugins = setOf("plugin.a", "plugin.b"),
+                dependencies = emptySet(),
+            )
         val rule = ErrorRule("Project {{PATH}} has plugins {{PLUGINS}}")
 
         // when

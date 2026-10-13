@@ -1,8 +1,8 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.internal.utils
 
-/**
- * Prints strings inside a nicely fitted pill box.
- */
+/** Prints strings inside a nicely fitted pill box. */
 internal class PillBoxPrinter(
     private val textOutput: TextOutput,
     private val title: String,
@@ -29,14 +29,17 @@ internal class PillBoxPrinter(
     }
 
     private fun padMessage(message: String): String {
-        return message.split('\n').flatMap { line ->
-            val chunked = line.chunked(messageLength)
-            if (chunked.isEmpty()) {
-                return@flatMap listOf("| ${"".padEnd(messageLength)} |")
-            } else {
-                return@flatMap chunked.map { "| ${it.ansiAwarePadEnd(messageLength)} |" }
+        return message
+            .split('\n')
+            .flatMap { line ->
+                val chunked = line.chunked(messageLength)
+                if (chunked.isEmpty()) {
+                    return@flatMap listOf("| ${"".padEnd(messageLength)} |")
+                } else {
+                    return@flatMap chunked.map { "| ${it.ansiAwarePadEnd(messageLength)} |" }
+                }
             }
-        }.joinToString("\n")
+            .joinToString("\n")
     }
 
     private fun String.ansiAwarePadEnd(length: Int): String {

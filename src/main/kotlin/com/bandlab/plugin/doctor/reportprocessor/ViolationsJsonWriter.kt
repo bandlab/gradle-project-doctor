@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.reportprocessor
 
 import com.bandlab.plugin.doctor.internal.models.MessageGroup

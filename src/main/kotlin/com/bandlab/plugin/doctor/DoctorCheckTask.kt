@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor
 
 import com.bandlab.plugin.doctor.internal.ViolationReporter
@@ -7,6 +9,7 @@ import com.bandlab.plugin.doctor.internal.runDoctorCheck
 import com.bandlab.plugin.doctor.reportprocessor.CheckstyleReportWriter
 import com.bandlab.plugin.doctor.reportprocessor.ConsoleReporter
 import com.bandlab.plugin.doctor.reportprocessor.ViolationsJsonWriter
+import java.io.File
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
@@ -23,17 +26,17 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 import org.json.JSONObject
-import java.io.File
-
 
 /**
  * A task to check the project composition against the doctor entries
  *
- * It will generate a JSON report file that will be stored in [jsonReportFile]
- * If the [summaryOnly] is set to true, it will only generate the report without failing the task.
- * In this case, the responsibility will be passed to [DoctorCheckRootTask]
+ * It will generate a JSON report file that will be stored in [jsonReportFile] If the [summaryOnly]
+ * is set to true, it will only generate the report without failing the task. In this case, the
+ * responsibility will be passed to [DoctorCheckRootTask]
  */
-@org.gradle.api.tasks.UntrackedTask(because = "Reports violations via logger/console and baseline filtering; not safely cacheable")
+@org.gradle.api.tasks.UntrackedTask(
+    because = "Reports violations via logger/console and baseline filtering; not safely cacheable"
+)
 abstract class DoctorCheckTask : DefaultTask() {
 
     @get:PathSensitive(PathSensitivity.NONE)
@@ -44,12 +47,11 @@ abstract class DoctorCheckTask : DefaultTask() {
     @get:InputFiles
     abstract val subProjectCompositionFiles: ConfigurableFileCollection
 
-    @get:Input
-    abstract val entries: SetProperty<DoctorEntry>
+    @get:Input abstract val entries: SetProperty<DoctorEntry>
 
     @get:Option(
         option = "summary",
-        description = "Whether or not to enable the summary only report"
+        description = "Whether or not to enable the summary only report",
     )
     @get:Input
     abstract val summaryOnly: Property<Boolean>
@@ -64,20 +66,19 @@ abstract class DoctorCheckTask : DefaultTask() {
     @get:InputFile
     abstract val buildGradleFile: RegularFileProperty
 
-    @get:OutputFile
-    abstract val jsonReportFile: RegularFileProperty
+    @get:OutputFile abstract val jsonReportFile: RegularFileProperty
 
-    @get:OutputFile
-    abstract val checkstyleReportFile: RegularFileProperty
+    @get:OutputFile abstract val checkstyleReportFile: RegularFileProperty
 
     @TaskAction
     fun run() {
         val projectCompFile = projectCompositionFile.get().asFile
         val localComposition = ProjectComposition.fromJson(JSONObject(projectCompFile.readText()))
 
-        val depsCompositions = subProjectCompositionFiles.files
-            .map { file -> file.toProjectComposition() }
-            .associateBy { it.path }
+        val depsCompositions =
+            subProjectCompositionFiles.files
+                .map { file -> file.toProjectComposition() }
+                .associateBy { it.path }
 
         val subProjects = localComposition.dependencies.mapNotNull { depsCompositions[it] }.toSet()
         val project = localComposition.copy(subProjects = subProjects)
@@ -99,16 +100,18 @@ abstract class DoctorCheckTask : DefaultTask() {
         logFile.writeText(MessageGroup.toJsonArray(messageOutputs).toString())
 
         if (summaryOnly.get().not()) {
-            val reporter = ViolationReporter(
-                mergedViolationProcessors = listOf(
-                    ViolationsJsonWriter(outputFile = logFile),
-                    ConsoleReporter(logger = logger),
-                    CheckstyleReportWriter(
-                        buildGradleFile = buildGradleFile.asFile.get(),
-                        outputFile = checkstyleReportFile.asFile.get(),
-                    )
+            val reporter =
+                ViolationReporter(
+                    mergedViolationProcessors =
+                        listOf(
+                            ViolationsJsonWriter(outputFile = logFile),
+                            ConsoleReporter(logger = logger),
+                            CheckstyleReportWriter(
+                                buildGradleFile = buildGradleFile.asFile.get(),
+                                outputFile = checkstyleReportFile.asFile.get(),
+                            ),
+                        )
                 )
-            )
             reporter.report(
                 jsonReportFiles = listOf(logFile),
                 baselineFile = baselineFile.orNull?.asFile,

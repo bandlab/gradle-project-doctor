@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.internal
 
 import com.bandlab.plugin.doctor.reportprocessor.MergedViolationProcessor
@@ -21,10 +23,11 @@ internal class ViolationReporter(
         jsonReportFiles: List<File>,
         baselineFile: File?,
     ) {
-        val mergedViolations = merger.createMergedViolations(
-            jsonReportFiles = jsonReportFiles,
-            baselineFile = baselineFile
-        )
+        val mergedViolations =
+            merger.createMergedViolations(
+                jsonReportFiles = jsonReportFiles,
+                baselineFile = baselineFile,
+            )
 
         val statuses = mergedViolationProcessors.map { it.process(mergedViolations) }
         val failure = statuses.find { it is ProcessStatus.Failure }

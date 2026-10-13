@@ -1,12 +1,14 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.internal.utils
 
+import java.util.Properties
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.provider.ValueSource
 import org.gradle.api.provider.ValueSourceParameters
-import java.util.Properties
 
 internal fun Project.getBuildProperty(varName: String, defaultValue: String? = null): String? =
     getBuildPropertyInternal(varName, defaultValue)
@@ -14,7 +16,8 @@ internal fun Project.getBuildProperty(varName: String, defaultValue: String? = n
 @Suppress("UnstableApiUsage")
 private fun Project.getBuildPropertyInternal(varName: String, defaultValue: String?): String? {
     val localPropsFile = isolated.rootProject.projectDirectory.file("local.properties")
-    return providers.environmentVariable(varName)
+    return providers
+        .environmentVariable(varName)
         .orElse(providers.localPropertiesProvider(varName, localPropsFile))
         .orElse(providers.gradleProperty(varName))
         .orNull ?: defaultValue
@@ -23,11 +26,14 @@ private fun Project.getBuildPropertyInternal(varName: String, defaultValue: Stri
 private fun ProviderFactory.localPropertiesProvider(
     varName: String,
     localPropsFile: RegularFile,
-) = of(LocalPropertiesValueSource::class.java) {
-    parameters.localPropertiesFile.set(localPropsFile)
-}.map { it[varName] }
+) =
+    of(LocalPropertiesValueSource::class.java) {
+            parameters.localPropertiesFile.set(localPropsFile)
+        }
+        .map { it[varName] }
 
-internal abstract class LocalPropertiesValueSource : ValueSource<Map<String, String>, LocalPropertiesValueSource.Parameters> {
+internal abstract class LocalPropertiesValueSource :
+    ValueSource<Map<String, String>, LocalPropertiesValueSource.Parameters> {
     interface Parameters : ValueSourceParameters {
         val localPropertiesFile: RegularFileProperty
     }

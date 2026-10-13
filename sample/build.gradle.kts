@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 plugins {
     id("com.bandlab.project.doctor")
     alias(libs.plugins.kotlin.jvm) apply false
@@ -39,21 +41,18 @@ projectDoctor {
 
     // 4b. Demo name rule: all feature paths contain "feature" -> warn (shows NameRule)
     warnOn("feature naming convention") {
-        projectWith { nameContains(":feature:") }
-            .thatNamedWith { nameContains("feature") }
+        projectWith { nameContains(":feature:") }.thatNamedWith { nameContains("feature") }
     }
 
     // 5. Demo thatHasDependencyWith: forbid direct json usage in feature modules
     //    (to showcase HasDependencyRule; note this uses nameContains, not library)
     warnOn("feature should not directly depend on org.json; use wrapper") {
-        projectWith { nameContains(":feature:") }
-            .thatHasDependencyWith { nameContains("json") }
+        projectWith { nameContains(":feature:") }.thatHasDependencyWith { nameContains("json") }
     }
 
     // 6. Demo thatHasPluginWith: java-library should not appear outside :api
     //    (shows HasPluginRule as forbidden-plugin check)
     warnOn("java-library plugin should only be used in :api modules") {
-        projectWith { nameContains(":feature:") }
-            .thatHasPluginWith { id("java-library") }
+        projectWith { nameContains(":feature:") }.thatHasPluginWith { id("java-library") }
     }
 }

@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.extension
 
 import com.bandlab.plugin.doctor.DoctorEntry
@@ -15,14 +17,12 @@ import com.bandlab.plugin.doctor.rules.NameRuleConfig
 import com.bandlab.plugin.doctor.rules.PluginRuleConfig
 import com.bandlab.plugin.doctor.rules.exclusion.ProjectExclusionConfig
 import com.bandlab.plugin.doctor.selector.ProjectSelectorConfig
+import javax.inject.Inject
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
 import org.gradle.kotlin.dsl.newInstance
-import javax.inject.Inject
 
-abstract class EntryBuilderExtension @Inject constructor(
-    private val objectFactory: ObjectFactory,
-) {
+abstract class EntryBuilderExtension @Inject constructor(private val objectFactory: ObjectFactory) {
 
     private lateinit var selector: ProjectSelector
     private lateinit var errorLevelExtension: ErrorLevelExtension
@@ -39,7 +39,9 @@ abstract class EntryBuilderExtension @Inject constructor(
         this.entryRegistry = errorLevelExtension
     }
 
-    infix fun withExclusion(action: Action<ProjectExclusionConfigExtension>): EntryBuilderExtension {
+    infix fun withExclusion(
+        action: Action<ProjectExclusionConfigExtension>
+    ): EntryBuilderExtension {
         val extension = objectFactory.newInstance<ProjectExclusionConfigExtension>().apply(action)
         this.exclusionConfig = extension.toConfig()
         return this
@@ -100,7 +102,7 @@ abstract class EntryBuilderExtension @Inject constructor(
             return objectFactory.newInstance<EntryBuilderExtension>().apply {
                 initialize(
                     selector = selector,
-                    errorLevelExtension = errorLevelExtension
+                    errorLevelExtension = errorLevelExtension,
                 )
             }
         }

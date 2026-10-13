@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor
 
 import com.bandlab.plugin.doctor.internal.models.ProjectComposition
@@ -13,20 +15,15 @@ import org.gradle.api.tasks.TaskAction
 @CacheableTask
 abstract class DoctorPopulateTask : DefaultTask() {
 
-    @get:Input
-    abstract val projectPath: Property<String>
+    @get:Input abstract val projectPath: Property<String>
 
-    @get:Input
-    abstract val observedPlugins: SetProperty<String>
+    @get:Input abstract val observedPlugins: SetProperty<String>
 
-    @get:Input
-    abstract val dependencies: SetProperty<String>
+    @get:Input abstract val dependencies: SetProperty<String>
 
-    @get:Input
-    abstract val exposedDependencies: SetProperty<String>
+    @get:Input abstract val exposedDependencies: SetProperty<String>
 
-    @get:OutputFile
-    abstract val projectCompositionFile: RegularFileProperty
+    @get:OutputFile abstract val projectCompositionFile: RegularFileProperty
 
     @TaskAction
     fun run() {
@@ -35,12 +32,13 @@ abstract class DoctorPopulateTask : DefaultTask() {
         val deps = dependencies.get()
         val exposedDeps = exposedDependencies.get()
 
-        val composition = ProjectComposition(
-            path = path,
-            plugins = plugins,
-            dependencies = deps,
-            exposedDependencies = exposedDeps,
-        )
+        val composition =
+            ProjectComposition(
+                path = path,
+                plugins = plugins,
+                dependencies = deps,
+                exposedDependencies = exposedDeps,
+            )
 
         val json = ProjectComposition.toJson(composition)
 

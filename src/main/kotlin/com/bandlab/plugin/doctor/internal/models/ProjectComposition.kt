@@ -1,13 +1,16 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.internal.models
 
+import java.io.Serializable
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.Serializable
 
 /**
  * A snapshot of [org.gradle.api.Project] that will be used in analyzing the project structure.
  *
- * @param exposedDependencies Dependencies that this project exposes transitively to its consumers via `api` configuration. A subset of [dependencies].
+ * @param exposedDependencies Dependencies that this project exposes transitively to its consumers
+ *   via `api` configuration. A subset of [dependencies].
  */
 data class ProjectComposition(
     val path: String,
@@ -29,14 +32,18 @@ data class ProjectComposition(
         fun fromJson(json: JSONObject): ProjectComposition {
             val path = json.getString("path")
             val plugins = json.getJSONArray("plugins").toList().map { it.toString() }.toSet()
-            val dependencies = json.optJSONArray("dependencies")?.toList()?.map { it.toString() }?.toSet() ?: emptySet()
-            val exposedDependencies = json.optJSONArray("exposedDependencies")?.toList()?.map { it.toString() }?.toSet() ?: emptySet()
+            val dependencies =
+                json.optJSONArray("dependencies")?.toList()?.map { it.toString() }?.toSet()
+                    ?: emptySet()
+            val exposedDependencies =
+                json.optJSONArray("exposedDependencies")?.toList()?.map { it.toString() }?.toSet()
+                    ?: emptySet()
             return ProjectComposition(
                 path = path,
                 plugins = plugins,
                 dependencies = dependencies,
                 exposedDependencies = exposedDependencies,
-                subProjects = emptySet() // Will be populated dynamically by DoctorCheckTask
+                subProjects = emptySet(), // Will be populated dynamically by DoctorCheckTask
             )
         }
     }

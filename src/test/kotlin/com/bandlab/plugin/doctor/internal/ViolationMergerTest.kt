@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.internal
 
 import com.bandlab.plugin.doctor.ErrorLevel
@@ -9,27 +11,24 @@ import org.junit.rules.TemporaryFolder
 
 class ViolationMergerTest {
 
-    @get:Rule
-    val tempFolder = TemporaryFolder()
+    @get:Rule val tempFolder = TemporaryFolder()
 
     @Test
     fun `createMergedViolations merges groups with same errorLevel`() {
         // given
         val error = ErrorLevel.Error("error")
-        val file1 = tempFolder.newFile("a.json").apply {
-            writeText(
-                MessageGroup.toJsonArray(
-                    listOf(MessageGroup(error, listOf("e1"))),
-                ).toString(),
-            )
-        }
-        val file2 = tempFolder.newFile("b.json").apply {
-            writeText(
-                MessageGroup.toJsonArray(
-                    listOf(MessageGroup(error, listOf("e2"))),
-                ).toString(),
-            )
-        }
+        val file1 =
+            tempFolder.newFile("a.json").apply {
+                writeText(
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString()
+                )
+            }
+        val file2 =
+            tempFolder.newFile("b.json").apply {
+                writeText(
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e2")))).toString()
+                )
+            }
         val merger = ViolationMerger()
 
         // when
@@ -44,20 +43,24 @@ class ViolationMergerTest {
     @Test
     fun `createMergedViolations keeps different errorLevels separate`() {
         // given
-        val file1 = tempFolder.newFile("a.json").apply {
-            writeText(
-                MessageGroup.toJsonArray(
-                    listOf(MessageGroup(ErrorLevel.Error("e"), listOf("e1"))),
-                ).toString(),
-            )
-        }
-        val file2 = tempFolder.newFile("b.json").apply {
-            writeText(
-                MessageGroup.toJsonArray(
-                    listOf(MessageGroup(ErrorLevel.Warning("w"), listOf("w1"))),
-                ).toString(),
-            )
-        }
+        val file1 =
+            tempFolder.newFile("a.json").apply {
+                writeText(
+                    MessageGroup.toJsonArray(
+                            listOf(MessageGroup(ErrorLevel.Error("e"), listOf("e1")))
+                        )
+                        .toString()
+                )
+            }
+        val file2 =
+            tempFolder.newFile("b.json").apply {
+                writeText(
+                    MessageGroup.toJsonArray(
+                            listOf(MessageGroup(ErrorLevel.Warning("w"), listOf("w1")))
+                        )
+                        .toString()
+                )
+            }
         val merger = ViolationMerger()
 
         // when
@@ -71,20 +74,19 @@ class ViolationMergerTest {
     fun `createMergedViolations filters baseline violations`() {
         // given
         val error = ErrorLevel.Error("e")
-        val report = tempFolder.newFile("report.json").apply {
-            writeText(
-                MessageGroup.toJsonArray(
-                    listOf(MessageGroup(error, listOf("e1", "e2"))),
-                ).toString(),
-            )
-        }
-        val baseline = tempFolder.newFile("baseline.json").apply {
-            writeText(
-                MessageGroup.toJsonArray(
-                    listOf(MessageGroup(error, listOf("e1"))),
-                ).toString(),
-            )
-        }
+        val report =
+            tempFolder.newFile("report.json").apply {
+                writeText(
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1", "e2"))))
+                        .toString()
+                )
+            }
+        val baseline =
+            tempFolder.newFile("baseline.json").apply {
+                writeText(
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString()
+                )
+            }
         val merger = ViolationMerger()
 
         // when
@@ -99,20 +101,18 @@ class ViolationMergerTest {
     fun `createMergedViolations returns empty when all are baselined`() {
         // given
         val error = ErrorLevel.Error("e")
-        val report = tempFolder.newFile("report.json").apply {
-            writeText(
-                MessageGroup.toJsonArray(
-                    listOf(MessageGroup(error, listOf("e1"))),
-                ).toString(),
-            )
-        }
-        val baseline = tempFolder.newFile("baseline.json").apply {
-            writeText(
-                MessageGroup.toJsonArray(
-                    listOf(MessageGroup(error, listOf("e1"))),
-                ).toString(),
-            )
-        }
+        val report =
+            tempFolder.newFile("report.json").apply {
+                writeText(
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString()
+                )
+            }
+        val baseline =
+            tempFolder.newFile("baseline.json").apply {
+                writeText(
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString()
+                )
+            }
         val merger = ViolationMerger()
 
         // when
@@ -139,11 +139,12 @@ class ViolationMergerTest {
     fun `createMergedViolations treats missing baseline as empty`() {
         // given
         val error = ErrorLevel.Error("e")
-        val report = tempFolder.newFile("report.json").apply {
-            writeText(
-                MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString(),
-            )
-        }
+        val report =
+            tempFolder.newFile("report.json").apply {
+                writeText(
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString()
+                )
+            }
         val baseline = tempFolder.newFile("baseline.json").apply { delete() }
         val merger = ViolationMerger()
 
@@ -158,13 +159,15 @@ class ViolationMergerTest {
     fun `createMergedViolations handles multiple messages in same group`() {
         // given
         val warning = ErrorLevel.Warning("w")
-        val file = tempFolder.newFile("a.json").apply {
-            writeText(
-                MessageGroup.toJsonArray(
-                    listOf(MessageGroup(warning, listOf("w1", "w2", "w3"))),
-                ).toString(),
-            )
-        }
+        val file =
+            tempFolder.newFile("a.json").apply {
+                writeText(
+                    MessageGroup.toJsonArray(
+                            listOf(MessageGroup(warning, listOf("w1", "w2", "w3")))
+                        )
+                        .toString()
+                )
+            }
         val merger = ViolationMerger()
 
         // when

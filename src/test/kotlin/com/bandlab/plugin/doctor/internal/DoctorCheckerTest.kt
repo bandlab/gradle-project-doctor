@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.internal
 
 import com.bandlab.plugin.doctor.DoctorEntry
@@ -28,20 +30,27 @@ class DoctorCheckerTest {
     @Test
     fun `when selector not applicable, rule is not evaluated`() {
         // given
-        val project = ProjectComposition(
-            path = ":common:utils",
-            plugins = emptySet(),
-            dependencies = setOf(":common:di"),
-        )
+        val project =
+            ProjectComposition(
+                path = ":common:utils",
+                plugins = emptySet(),
+                dependencies = setOf(":common:di"),
+            )
         val selectorConfig = createSelector { nameContains("screen") }
         val selector = WithSelector(selectorConfig)
-        val ruleConfig = object : PluginRuleConfig() { init { id("com.android.library") } }
-        val entry = DoctorEntry(
-            rule = HasPluginRule(ruleConfig),
-            selector = selector,
-            errorLevel = ErrorLevel.Error(null),
-            projectExclusion = null,
-        )
+        val ruleConfig =
+            object : PluginRuleConfig() {
+                init {
+                    id("com.android.library")
+                }
+            }
+        val entry =
+            DoctorEntry(
+                rule = HasPluginRule(ruleConfig),
+                selector = selector,
+                errorLevel = ErrorLevel.Error(null),
+                projectExclusion = null,
+            )
 
         // when
         val result = runDoctorCheck(logger, project, setOf(entry))
@@ -53,20 +62,27 @@ class DoctorCheckerTest {
     @Test
     fun `when selector applicable and rule reports error, message group is created`() {
         // given
-        val project = ProjectComposition(
-            path = ":feature:a",
-            plugins = setOf("com.android.library"),
-            dependencies = emptySet(),
-        )
+        val project =
+            ProjectComposition(
+                path = ":feature:a",
+                plugins = setOf("com.android.library"),
+                dependencies = emptySet(),
+            )
         val selectorConfig = createSelector { nameContains("feature") }
         val selector = WithSelector(selectorConfig)
-        val ruleConfig = object : PluginRuleConfig() { init { id("com.android.library") } }
-        val entry = DoctorEntry(
-            rule = HasPluginRule(ruleConfig),
-            selector = selector,
-            errorLevel = ErrorLevel.Error(null),
-            projectExclusion = null,
-        )
+        val ruleConfig =
+            object : PluginRuleConfig() {
+                init {
+                    id("com.android.library")
+                }
+            }
+        val entry =
+            DoctorEntry(
+                rule = HasPluginRule(ruleConfig),
+                selector = selector,
+                errorLevel = ErrorLevel.Error(null),
+                projectExclusion = null,
+            )
 
         // when
         val result = runDoctorCheck(logger, project, setOf(entry))
@@ -80,29 +96,33 @@ class DoctorCheckerTest {
     @Test
     fun `when project is excluded, rule is not evaluated`() {
         // given
-        val project = ProjectComposition(
-            path = ":image:zoom:screen",
-            plugins = setOf("com.android.library"),
-            dependencies = setOf("org.jetbrains.skiko:skiko"),
-        )
+        val project =
+            ProjectComposition(
+                path = ":image:zoom:screen",
+                plugins = setOf("com.android.library"),
+                dependencies = setOf("org.jetbrains.skiko:skiko"),
+            )
         val selectorConfig = createSelector { nameContains("screen") }
         val selector = WithSelector(selectorConfig)
-        val ruleConfig = HasDependencyConfig(
-            pluginId = "",
-            dependency = MatchableValue.Contains("skiko"),
-            excludedDependency = emptySet(),
-            projectExclusion = ProjectExclusionConfig(emptyList()),
-        )
+        val ruleConfig =
+            HasDependencyConfig(
+                pluginId = "",
+                dependency = MatchableValue.Contains("skiko"),
+                excludedDependency = emptySet(),
+                projectExclusion = ProjectExclusionConfig(emptyList()),
+            )
         val rule = HasDependencyRule(ruleConfig)
-        val exclusionMatcher = com.bandlab.plugin.doctor.internal.rules.exclusion.ProjectPathExclusionMatcher(
-            MatchableValue.Contains("zoom"),
-        )
-        val entry = DoctorEntry(
-            rule = rule,
-            selector = selector,
-            errorLevel = ErrorLevel.Warning(null),
-            projectExclusion = ProjectExclusionConfig(listOf(exclusionMatcher)),
-        )
+        val exclusionMatcher =
+            com.bandlab.plugin.doctor.internal.rules.exclusion.ProjectPathExclusionMatcher(
+                MatchableValue.Contains("zoom")
+            )
+        val entry =
+            DoctorEntry(
+                rule = rule,
+                selector = selector,
+                errorLevel = ErrorLevel.Warning(null),
+                projectExclusion = ProjectExclusionConfig(listOf(exclusionMatcher)),
+            )
 
         // when
         val result = runDoctorCheck(logger, project, setOf(entry))
@@ -114,39 +134,44 @@ class DoctorCheckerTest {
     @Test
     fun `when multiple entries with same error level, messages are merged`() {
         // given
-        val project = ProjectComposition(
-            path = ":feature:a",
-            plugins = setOf("plugin.a"),
-            dependencies = setOf("dep.a", "dep.b"),
-        )
+        val project =
+            ProjectComposition(
+                path = ":feature:a",
+                plugins = setOf("plugin.a"),
+                dependencies = setOf("dep.a", "dep.b"),
+            )
         val selectorConfig = createSelector { nameContains("feature") }
         val selector = WithSelector(selectorConfig)
-        val entry1 = DoctorEntry(
-            rule = HasDependencyRule(
-                HasDependencyConfig(
-                    pluginId = "",
-                    dependency = MatchableValue.Match("dep.a"),
-                    excludedDependency = emptySet(),
-                    projectExclusion = ProjectExclusionConfig(emptyList()),
-                ),
-            ),
-            selector = selector,
-            errorLevel = ErrorLevel.Error(null),
-            projectExclusion = null,
-        )
-        val entry2 = DoctorEntry(
-            rule = HasDependencyRule(
-                HasDependencyConfig(
-                    pluginId = "",
-                    dependency = MatchableValue.Match("dep.b"),
-                    excludedDependency = emptySet(),
-                    projectExclusion = ProjectExclusionConfig(emptyList()),
-                ),
-            ),
-            selector = selector,
-            errorLevel = ErrorLevel.Error(null),
-            projectExclusion = null,
-        )
+        val entry1 =
+            DoctorEntry(
+                rule =
+                    HasDependencyRule(
+                        HasDependencyConfig(
+                            pluginId = "",
+                            dependency = MatchableValue.Match("dep.a"),
+                            excludedDependency = emptySet(),
+                            projectExclusion = ProjectExclusionConfig(emptyList()),
+                        )
+                    ),
+                selector = selector,
+                errorLevel = ErrorLevel.Error(null),
+                projectExclusion = null,
+            )
+        val entry2 =
+            DoctorEntry(
+                rule =
+                    HasDependencyRule(
+                        HasDependencyConfig(
+                            pluginId = "",
+                            dependency = MatchableValue.Match("dep.b"),
+                            excludedDependency = emptySet(),
+                            projectExclusion = ProjectExclusionConfig(emptyList()),
+                        )
+                    ),
+                selector = selector,
+                errorLevel = ErrorLevel.Error(null),
+                projectExclusion = null,
+            )
 
         // when
         val result = runDoctorCheck(logger, project, setOf(entry1, entry2))
@@ -159,72 +184,81 @@ class DoctorCheckerTest {
     @Test
     fun `when entries have different error levels, groups are separated`() {
         // given
-        val project = ProjectComposition(
-            path = ":feature:a",
-            plugins = setOf("plugin.a"),
-            dependencies = setOf("dep.a", "dep.b"),
-        )
+        val project =
+            ProjectComposition(
+                path = ":feature:a",
+                plugins = setOf("plugin.a"),
+                dependencies = setOf("dep.a", "dep.b"),
+            )
         val selectorConfig = createSelector { nameContains("feature") }
         val selector = WithSelector(selectorConfig)
-        val entryError = DoctorEntry(
-            rule = HasDependencyRule(
-                HasDependencyConfig(
-                    pluginId = "",
-                    dependency = MatchableValue.Match("dep.a"),
-                    excludedDependency = emptySet(),
-                    projectExclusion = ProjectExclusionConfig(emptyList()),
-                ),
-            ),
-            selector = selector,
-            errorLevel = ErrorLevel.Error(null),
-            projectExclusion = null,
-        )
-        val entryWarn = DoctorEntry(
-            rule = HasDependencyRule(
-                HasDependencyConfig(
-                    pluginId = "",
-                    dependency = MatchableValue.Match("dep.b"),
-                    excludedDependency = emptySet(),
-                    projectExclusion = ProjectExclusionConfig(emptyList()),
-                ),
-            ),
-            selector = selector,
-            errorLevel = ErrorLevel.Warning(null),
-            projectExclusion = null,
-        )
+        val entryError =
+            DoctorEntry(
+                rule =
+                    HasDependencyRule(
+                        HasDependencyConfig(
+                            pluginId = "",
+                            dependency = MatchableValue.Match("dep.a"),
+                            excludedDependency = emptySet(),
+                            projectExclusion = ProjectExclusionConfig(emptyList()),
+                        )
+                    ),
+                selector = selector,
+                errorLevel = ErrorLevel.Error(null),
+                projectExclusion = null,
+            )
+        val entryWarn =
+            DoctorEntry(
+                rule =
+                    HasDependencyRule(
+                        HasDependencyConfig(
+                            pluginId = "",
+                            dependency = MatchableValue.Match("dep.b"),
+                            excludedDependency = emptySet(),
+                            projectExclusion = ProjectExclusionConfig(emptyList()),
+                        )
+                    ),
+                selector = selector,
+                errorLevel = ErrorLevel.Warning(null),
+                projectExclusion = null,
+            )
 
         // when
         val result = runDoctorCheck(logger, project, setOf(entryError, entryWarn))
 
         // then
         assertThat(result).hasSize(2)
-        assertThat(result.map { it.errorLevel }).containsExactly(ErrorLevel.Error(null), ErrorLevel.Warning(null))
+        assertThat(result.map { it.errorLevel })
+            .containsExactly(ErrorLevel.Error(null), ErrorLevel.Warning(null))
     }
 
     @Test
     fun `when rule reports no errors, no group is created`() {
         // given
-        val project = ProjectComposition(
-            path = ":feature:a",
-            plugins = emptySet(),
-            dependencies = setOf(":common:utils"),
-        )
+        val project =
+            ProjectComposition(
+                path = ":feature:a",
+                plugins = emptySet(),
+                dependencies = setOf(":common:utils"),
+            )
         val selectorConfig = createSelector { nameContains("feature") }
         val selector = WithSelector(selectorConfig)
-        val rule = HasDependencyRule(
-            HasDependencyConfig(
-                pluginId = "",
-                dependency = MatchableValue.Contains("skiko"),
-                excludedDependency = emptySet(),
-                projectExclusion = ProjectExclusionConfig(emptyList()),
-            ),
-        )
-        val entry = DoctorEntry(
-            rule = rule,
-            selector = selector,
-            errorLevel = ErrorLevel.Error(null),
-            projectExclusion = null,
-        )
+        val rule =
+            HasDependencyRule(
+                HasDependencyConfig(
+                    pluginId = "",
+                    dependency = MatchableValue.Contains("skiko"),
+                    excludedDependency = emptySet(),
+                    projectExclusion = ProjectExclusionConfig(emptyList()),
+                )
+            )
+        val entry =
+            DoctorEntry(
+                rule = rule,
+                selector = selector,
+                errorLevel = ErrorLevel.Error(null),
+                projectExclusion = null,
+            )
 
         // when
         val result = runDoctorCheck(logger, project, setOf(entry))

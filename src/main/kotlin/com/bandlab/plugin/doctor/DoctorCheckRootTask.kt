@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor
 
 import com.bandlab.plugin.doctor.internal.ViolationReporter
@@ -16,12 +18,12 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
-@org.gradle.api.tasks.UntrackedTask(because = "Aggregates doctor reports via logger/console; not safely cacheable")
+@org.gradle.api.tasks.UntrackedTask(
+    because = "Aggregates doctor reports via logger/console; not safely cacheable"
+)
 abstract class DoctorCheckRootTask : DefaultTask() {
 
-    /**
-     * JSON report files from the sub-projects that created by [DoctorCheckTask]
-     */
+    /** JSON report files from the sub-projects that created by [DoctorCheckTask] */
     @get:PathSensitive(PathSensitivity.NONE)
     @get:InputFiles
     abstract val jsonReportFiles: ConfigurableFileCollection
@@ -32,11 +34,8 @@ abstract class DoctorCheckRootTask : DefaultTask() {
     @get:InputFiles
     abstract val baselineFile: RegularFileProperty
 
-    /**
-     * Merged JSON report file as the output
-     */
-    @get:OutputFile
-    abstract val mergedReportFile: RegularFileProperty
+    /** Merged JSON report file as the output */
+    @get:OutputFile abstract val mergedReportFile: RegularFileProperty
 
     @Suppress("unused", "PropertyName")
     @get:Option(option = "summary", description = "This is ignored and unused in root task")
@@ -46,16 +45,18 @@ abstract class DoctorCheckRootTask : DefaultTask() {
 
     @TaskAction
     fun run() {
-        val reporter = ViolationReporter(
-            mergedViolationProcessors = listOf(
-                ConsoleReporter(
-                    logger = logger,
-                    useStyledOutput = true,
-                    reportTitle = "Project Doctor Report",
-                ),
-                ViolationsJsonWriter(mergedReportFile.get().asFile),
+        val reporter =
+            ViolationReporter(
+                mergedViolationProcessors =
+                    listOf(
+                        ConsoleReporter(
+                            logger = logger,
+                            useStyledOutput = true,
+                            reportTitle = "Project Doctor Report",
+                        ),
+                        ViolationsJsonWriter(mergedReportFile.get().asFile),
+                    )
             )
-        )
 
         reporter.report(
             jsonReportFiles = jsonReportFiles.files.toList(),

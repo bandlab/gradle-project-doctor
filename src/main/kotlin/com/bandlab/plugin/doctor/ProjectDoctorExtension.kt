@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor
 
 import com.bandlab.plugin.doctor.extension.ErrorLevelExtension
@@ -5,6 +7,7 @@ import com.bandlab.plugin.doctor.internal.ProjectDoctorExtensionService
 import com.bandlab.plugin.doctor.internal.models.ProjectComposition
 import com.bandlab.plugin.doctor.rules.exclusion.ProjectExclusionConfig
 import com.bandlab.plugin.doctor.rules.exclusion.observedPlugins
+import java.io.Serializable
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.invocation.Gradle
@@ -12,7 +15,6 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.SetProperty
 import org.gradle.kotlin.dsl.create
-import java.io.Serializable
 
 /**
  * The extension for the [ProjectDoctorPlugin].
@@ -39,15 +41,16 @@ open class ProjectDoctorExtension(factory: ObjectFactory) : ErrorLevelBuilderExt
     override val objectFactory: ObjectFactory = factory
 
     /**
-     * Optional baseline for filtering violations by exact message and severity during checks.
-     * Must be configured before running `doctorGenerateBaseline`, which replaces its contents.
-     * A missing file is treated as an empty baseline.
+     * Optional baseline for filtering violations by exact message and severity during checks. Must
+     * be configured before running `doctorGenerateBaseline`, which replaces its contents. A missing
+     * file is treated as an empty baseline.
      */
     val baselineFile = factory.fileProperty()
 
     /**
      * A set of doctor entries that will be checked. This is being added in [ErrorLevelExtension]
-     * but the configuration builder is in all builder extension class like [com.bandlab.plugin.doctor.extension.EntryBuilderExtension]
+     * but the configuration builder is in all builder extension class like
+     * [com.bandlab.plugin.doctor.extension.EntryBuilderExtension]
      */
     internal val entries: SetProperty<DoctorEntry> = factory.setProperty(DoctorEntry::class.java)
 
@@ -70,16 +73,15 @@ open class ProjectDoctorExtension(factory: ObjectFactory) : ErrorLevelBuilderExt
             check(root == root.rootProject) {
                 "ProjectDoctorExtension can only be created in the root project"
             }
-            val rootExtension = root.rootProject.extensions.create<ProjectDoctorExtension>("projectDoctor")
+            val rootExtension =
+                root.rootProject.extensions.create<ProjectDoctorExtension>("projectDoctor")
             ProjectDoctorExtensionService.of(root).get().setProjectDoctorExtension(rootExtension)
             return rootExtension
         }
     }
 }
 
-/**
- * Entry point from the [ProjectDoctorExtension] to create a new [DoctorEntry] with error level.
- */
+/** Entry point from the [ProjectDoctorExtension] to create a new [DoctorEntry] with error level. */
 interface ErrorLevelBuilderExtension : EntryCommiter {
 
     val objectFactory: ObjectFactory
@@ -88,11 +90,12 @@ interface ErrorLevelBuilderExtension : EntryCommiter {
         additionalMessage: String? = null,
         scope: Action<ErrorLevelExtension>,
     ) {
-        val errorLevelExtension = ErrorLevelExtension.create(
-            objectFactory = objectFactory,
-            errCode = LEVEL_WARN,
-            additionalMessage = additionalMessage
-        )
+        val errorLevelExtension =
+            ErrorLevelExtension.create(
+                objectFactory = objectFactory,
+                errCode = LEVEL_WARN,
+                additionalMessage = additionalMessage,
+            )
         scope.execute(errorLevelExtension)
         commitEntries(errorLevelExtension.entries)
     }
@@ -101,11 +104,12 @@ interface ErrorLevelBuilderExtension : EntryCommiter {
         additionalMessage: String? = null,
         scope: Action<ErrorLevelExtension>,
     ) {
-        val errorLevelExtension = ErrorLevelExtension.create(
-            objectFactory = objectFactory,
-            errCode = LEVEL_ERR,
-            additionalMessage = additionalMessage
-        )
+        val errorLevelExtension =
+            ErrorLevelExtension.create(
+                objectFactory = objectFactory,
+                errCode = LEVEL_ERR,
+                additionalMessage = additionalMessage,
+            )
         scope.execute(errorLevelExtension)
         commitEntries(errorLevelExtension.entries)
     }
@@ -122,6 +126,7 @@ interface ErrorLevelBuilderExtension : EntryCommiter {
  */
 interface EntryRegistry {
     val entries: Set<DoctorEntry>
+
     fun addEntry(entry: DoctorEntry)
 }
 
@@ -140,7 +145,8 @@ private fun Set<DoctorEntry>.observedPlugins(): Set<String> = flatMap {
     val selectorList = if (it.selector is PluginAwareEntry) it.selector.pluginIds else null
     val exclusionList = it.projectExclusion?.observedPlugins()
     ruleList.orEmpty() + selectorList.orEmpty() + exclusionList.orEmpty()
-}.toSet()
+}
+    .toSet()
 
 internal interface PluginAwareEntry {
     val pluginIds: Set<String>
@@ -177,7 +183,6 @@ interface DoctorRule : Serializable {
 interface ProjectSelector : Serializable {
     fun isApplicable(project: ProjectComposition): Boolean
 }
-
 
 class DoctorEntry(
     val rule: DoctorRule,
