@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.internal
 
 import com.bandlab.plugin.doctor.DoctorEntry
@@ -17,7 +19,6 @@ internal fun runDoctorCheck(
 
         // Collect all messages for the current error level
         val messages = entriesWithLevel.flatMap { entry ->
-
             val isExcluded = entry.isProjectExcluded(project)
             if (!isExcluded) {
                 buildList {
@@ -29,7 +30,8 @@ internal fun runDoctorCheck(
                             [Project Doctor] $errorLevel - $errorMsg
                                 Selector: ${entry.selector}
                                 Rule: ${entry.rule}
-                            """.trimIndent()
+                            """
+                                .trimIndent(),
                         )
                     }
                 }

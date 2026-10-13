@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.reportprocessor
 
 import com.bandlab.plugin.doctor.ErrorLevel
@@ -16,13 +18,15 @@ internal class CheckstyleReportWriter(
         if (items.isEmpty()) return ProcessStatus.Success
 
         val violationItems = items.joinToString(separator = System.lineSeparator())
-        val reportContent = """
+        val reportContent =
+            """
             <checkstyle version="4.3">
                 <file name="${buildGradleFile.absolutePath}">
                 $violationItems
                 </file>
             </checkstyle>
-        """.trimIndent()
+        """
+                .trimIndent()
 
         outputFile.delete()
         outputFile.writeText(reportContent)
@@ -33,10 +37,11 @@ internal class CheckstyleReportWriter(
     private fun MessageGroup.toCheckstyleItems(): List<String> {
         if (messages.isEmpty()) return emptyList()
 
-        val severity = when (errorLevel) {
-            is ErrorLevel.Error -> "error"
-            is ErrorLevel.Warning -> "warning"
-        }
+        val severity =
+            when (errorLevel) {
+                is ErrorLevel.Error -> "error"
+                is ErrorLevel.Warning -> "warning"
+            }
         val prefix = errorLevel.msg.orEmpty()
         return messages.map { msg ->
             val escapedMessage = escapeXml("$prefix\n$msg")
@@ -45,7 +50,8 @@ internal class CheckstyleReportWriter(
     }
 
     private fun escapeXml(input: String): String {
-        return input.replace("&", "&amp;")
+        return input
+            .replace("&", "&amp;")
             .replace("<", "&lt;")
             .replace(">", "&gt;")
             .replace("\"", "&quot;")

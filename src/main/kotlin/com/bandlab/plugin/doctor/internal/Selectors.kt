@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 @file:Suppress("UnstableApiUsage")
 
 package com.bandlab.plugin.doctor.internal
@@ -7,9 +9,8 @@ import com.bandlab.plugin.doctor.ProjectSelector
 import com.bandlab.plugin.doctor.internal.models.ProjectComposition
 import com.bandlab.plugin.doctor.selector.ProjectSelectorConfig
 
-internal class WithSelector(
-    private val config: ProjectSelectorConfig,
-) : ProjectSelector, PluginAwareEntry {
+internal class WithSelector(private val config: ProjectSelectorConfig) :
+    ProjectSelector, PluginAwareEntry {
 
     private val pluginId = config.pluginId
     override val pluginIds: Set<String> = setOf(pluginId)
@@ -26,11 +27,11 @@ internal class WithSelector(
     }
 }
 
-internal class WithDependencySelector(
-    private val config: ProjectSelectorConfig,
-) : ProjectSelector, PluginAwareEntry {
+internal class WithDependencySelector(private val config: ProjectSelectorConfig) :
+    ProjectSelector, PluginAwareEntry {
 
-    override val pluginIds: Set<String> get() = setOf(config.pluginId)
+    override val pluginIds: Set<String>
+        get() = setOf(config.pluginId)
 
     override fun isApplicable(project: ProjectComposition): Boolean {
         return isDependencyMatch(project) && isPluginMatch(project)

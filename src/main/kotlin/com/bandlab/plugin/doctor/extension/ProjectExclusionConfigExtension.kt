@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.extension
 
 import com.bandlab.plugin.doctor.apply
@@ -7,15 +9,17 @@ import com.bandlab.plugin.doctor.internal.rules.exclusion.PluginExclusionMatcher
 import com.bandlab.plugin.doctor.internal.rules.exclusion.ProjectExclusionMatcher
 import com.bandlab.plugin.doctor.internal.rules.exclusion.ProjectPathExclusionMatcher
 import com.bandlab.plugin.doctor.rules.exclusion.ProjectExclusionConfig
+import javax.inject.Inject
 import org.gradle.api.Action
 import org.gradle.api.internal.catalog.ExternalModuleDependencyFactory.PluginNotationSupplier
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.newInstance
 import org.gradle.plugin.use.PluginDependency
-import javax.inject.Inject
 
-abstract class ProjectExclusionConfigExtension @Inject constructor(private val factory: ObjectFactory) {
+abstract class ProjectExclusionConfigExtension
+@Inject
+constructor(private val factory: ObjectFactory) {
 
     internal val matchers = mutableListOf<ProjectExclusionMatcher>()
 
@@ -54,7 +58,8 @@ abstract class ProjectExclusionConfigExtension @Inject constructor(private val f
     }
 
     fun plugin(pluginSupplier: PluginNotationSupplier) {
-        matchers += PluginExclusionMatcher(MatchableValue.Match(pluginSupplier.asProvider().get().pluginId))
+        matchers +=
+            PluginExclusionMatcher(MatchableValue.Match(pluginSupplier.asProvider().get().pluginId))
     }
 
     fun matchAll(action: Action<ProjectExclusionConfigExtension>) {

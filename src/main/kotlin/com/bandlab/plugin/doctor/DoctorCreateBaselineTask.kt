@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor
 
 import com.bandlab.plugin.doctor.internal.ViolationMerger
@@ -15,15 +17,12 @@ import org.gradle.api.tasks.TaskAction
 @org.gradle.api.tasks.UntrackedTask(because = "Creates baseline via logger; not safely cacheable")
 abstract class DoctorCreateBaselineTask : DefaultTask() {
 
-    /**
-     * JSON report files from the sub-projects that created by [DoctorCheckTask]
-     */
+    /** JSON report files from the sub-projects that created by [DoctorCheckTask] */
     @get:PathSensitive(PathSensitivity.NONE)
     @get:InputFiles
     abstract val jsonReportFiles: ConfigurableFileCollection
 
-    @get:OutputFile
-    abstract val baselineFile: RegularFileProperty
+    @get:OutputFile abstract val baselineFile: RegularFileProperty
 
     @TaskAction
     fun run() {

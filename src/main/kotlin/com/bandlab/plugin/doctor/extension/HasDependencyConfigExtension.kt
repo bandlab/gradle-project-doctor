@@ -1,12 +1,14 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.extension
 
 import com.bandlab.plugin.doctor.rules.HasDependencyConfig
+import javax.inject.Inject
 import org.gradle.api.Action
 import org.gradle.api.internal.catalog.ExternalModuleDependencyFactory.PluginNotationSupplier
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Provider
 import org.gradle.plugin.use.PluginDependency
-import javax.inject.Inject
 
 abstract class HasDependencyConfigExtension @Inject constructor(factory: ObjectFactory) {
 
@@ -46,7 +48,7 @@ abstract class HasDependencyConfigExtension @Inject constructor(factory: ObjectF
      * Exclude dependencies from rule check.
      *
      * @param excludes exact project paths or external `group:name` coordinates, without versions
-     * (for example, `:common:screen` or `com.google.guava:guava`)
+     *   (for example, `:common:screen` or `com.google.guava:guava`)
      */
     fun excludes(vararg excludes: String) {
         this.excludedDependency.addAll(excludes.map { MatchableValue.Match(it) })
@@ -65,10 +67,11 @@ abstract class HasDependencyConfigExtension @Inject constructor(factory: ObjectF
         action.execute(exclusionExtension)
     }
 
-    fun toConfig(): HasDependencyConfig = HasDependencyConfig(
-        pluginId = pluginId,
-        dependency = dependency,
-        excludedDependency = excludedDependency,
-        projectExclusion = exclusionExtension.toConfig(),
-    )
+    fun toConfig(): HasDependencyConfig =
+        HasDependencyConfig(
+            pluginId = pluginId,
+            dependency = dependency,
+            excludedDependency = excludedDependency,
+            projectExclusion = exclusionExtension.toConfig(),
+        )
 }

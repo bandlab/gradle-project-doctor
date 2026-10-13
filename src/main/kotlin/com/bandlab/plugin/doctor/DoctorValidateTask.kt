@@ -1,6 +1,9 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor
 
 import com.bandlab.plugin.doctor.internal.models.ProjectComposition
+import java.io.File
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.RegularFileProperty
@@ -10,16 +13,17 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.json.JSONObject
-import java.io.File
 
 /**
- * Check if Project Composition is properly configured. It's useful to have this as a test
- * for [DoctorPopulateTask]
+ * Check if Project Composition is properly configured. It's useful to have this as a test for
+ * [DoctorPopulateTask]
  *
- * Unlike actual check that will ignore project that doesn't have Project doctor plugin,
- * this task will verify evey dependencies.
+ * Unlike actual check that will ignore project that doesn't have Project doctor plugin, this task
+ * will verify evey dependencies.
  */
-@org.gradle.api.tasks.UntrackedTask(because = "Validates composition via logger/error; not safely cacheable")
+@org.gradle.api.tasks.UntrackedTask(
+    because = "Validates composition via logger/error; not safely cacheable",
+)
 abstract class DoctorValidateTask : DefaultTask() {
 
     @get:PathSensitive(PathSensitivity.NONE)
@@ -35,9 +39,10 @@ abstract class DoctorValidateTask : DefaultTask() {
         val projectCompFile = projectCompositionFile.get().asFile
         val localComposition = ProjectComposition.fromJson(JSONObject(projectCompFile.readText()))
 
-        val depsCompositions = subProjectCompositionFiles.files
-            .map { file -> file.toProjectComposition() }
-            .associateBy { it.path }
+        val depsCompositions =
+            subProjectCompositionFiles.files
+                .map { file -> file.toProjectComposition() }
+                .associateBy { it.path }
 
         val subProjects = localComposition.dependencies.mapNotNull { depsCompositions[it] }.toSet()
         val project = localComposition.copy(subProjects = subProjects)
@@ -65,11 +70,12 @@ abstract class DoctorValidateTask : DefaultTask() {
                 |Project composition status $statusCaption
                 |--–––––––––––––––––––––––––––––––––
                 |==> Deps:
-                |- ${subDeps.sortedBy { it }.joinToString(separator = "\n- ")} 
+                |- ${subDeps.sortedBy { it }.joinToString(separator = "\n- ")}
                 |
                 |==> Subs:
                 |- ${subProjects.sortedBy { it.path }.joinToString(separator = "\n- ") { it.path }}
-            """.trimMargin()
+            """
+                .trimMargin()
 
         if (isSizeValid) {
             logger.info(compositionMessage)

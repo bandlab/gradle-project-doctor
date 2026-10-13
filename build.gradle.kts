@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 import com.vanniktech.maven.publish.GradlePlugin
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.SourcesJar
@@ -8,21 +10,19 @@ plugins {
 }
 
 group = "com.bandlab"
+
 version = providers.gradleProperty("projectDoctorVersion").orElse("0.1.0-SNAPSHOT").get()
 
 /** Gradle/`ORG_GRADLE_PROJECT_` property, or null when unset *or* blank. */
-fun prop(name: String): String? =
-    providers.gradleProperty(name).orNull?.takeIf(String::isNotBlank)
+fun prop(name: String): String? = providers.gradleProperty(name).orNull?.takeIf(String::isNotBlank)
 
 dependencies {
-    compileOnly(libs.kotlin.gradlePlugin)
-    compileOnly(libs.android.gradlePlugin)
-
     implementation(libs.json)
-
+    compileOnly(libs.android.gradlePlugin)
+    compileOnly(libs.kotlin.gradlePlugin)
+    testImplementation(gradleTestKit())
     testImplementation(libs.junit)
     testImplementation(libs.truth)
-    testImplementation(gradleTestKit())
 }
 
 // Build with JDK 25 but target Java 21, so consumers can run Gradle on Java 21+.
@@ -45,11 +45,14 @@ kotlin {
     }
 }
 
-// Optionally run tests (and the TestKit builds they start) on another JDK, e.g. -PtestJavaVersion=21
+// Optionally run tests (and the TestKit builds they start) on another JDK, e.g.
+// -PtestJavaVersion=21
 prop("testJavaVersion")?.let { testJavaVersion ->
     tasks.withType<Test>().configureEach {
         javaLauncher.set(
-            javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(testJavaVersion)) }
+            javaToolchains.launcherFor {
+                languageVersion.set(JavaLanguageVersion.of(testJavaVersion))
+            },
         )
     }
 }
@@ -96,7 +99,9 @@ mavenPublishing {
         scm {
             url.set("https://github.com/bandlab/gradle-project-doctor")
             connection.set("scm:git:git://github.com/bandlab/gradle-project-doctor.git")
-            developerConnection.set("scm:git:ssh://git@github.com/bandlab/gradle-project-doctor.git")
+            developerConnection.set(
+                "scm:git:ssh://git@github.com/bandlab/gradle-project-doctor.git",
+            )
         }
     }
 

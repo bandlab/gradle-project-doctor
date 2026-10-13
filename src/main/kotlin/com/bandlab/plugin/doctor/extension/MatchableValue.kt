@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.extension
 
 import java.io.Serializable
@@ -5,15 +7,18 @@ import java.io.Serializable
 sealed interface MatchableValue : Serializable {
 
     val value: String
+
     fun isMatch(target: String): Boolean
 
     class AlwaysValid : MatchableValue {
         override val value: String = ""
+
         override fun isMatch(target: String): Boolean = true
     }
 
     class AlwaysInvalid : MatchableValue {
         override val value: String = ""
+
         override fun isMatch(target: String): Boolean = false
     }
 

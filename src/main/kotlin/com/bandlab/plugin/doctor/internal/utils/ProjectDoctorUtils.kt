@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.internal.utils
 
 import org.gradle.api.NamedDomainObjectProvider
@@ -13,29 +15,32 @@ import org.gradle.api.provider.Provider
 
 internal fun Project.runtimeConfiguration(): Provider<Configuration> = provider {
     val classPathName = preferredRuntimeClasspathName()
-    val classPathNames = listOf(
-        preferredRuntimeClasspathName(),
-        "runtimeClasspath",
-        "debugRuntimeClasspath",
-        "releaseRuntimeClasspath"
-    )
+    val classPathNames =
+        listOf(
+            preferredRuntimeClasspathName(),
+            "runtimeClasspath",
+            "debugRuntimeClasspath",
+            "releaseRuntimeClasspath",
+        )
     findConfiguration(classPathNames)?.get()
         ?: throw UnknownConfigurationException(
             "Configuration '$classPathName' not found in project '${this.path}'." +
-                " Available: ${configurations.names.filter { it.contains("runtime", ignoreCase = true) }}"
+                " Available: ${configurations.names.filter { it.contains("runtime", ignoreCase = true) }}",
         )
 }
 
 internal fun Project.runtimeResolvedComponents(): Provider<Set<String>> {
     val configuration = runtimeConfiguration()
-    return configuration.map { it.incoming.resolutionResult.rootComponent.get().toDependenciesIdentifiers() }
+    return configuration.map {
+        it.incoming.resolutionResult.rootComponent.get().toDependenciesIdentifiers()
+    }
 }
 
-/**
- * The dependencies this project exposes transitively to its consumers via `api` configuration.
- */
+/** The dependencies this project exposes transitively to its consumers via `api` configuration. */
 internal fun Project.exposedDeclaredComponents(): Provider<Set<String>> = provider {
-    findConfiguration(listOf("api"))?.get()?.dependencies
+    findConfiguration(listOf("api"))
+        ?.get()
+        ?.dependencies
         .orEmpty()
         .map { dependency ->
             when (dependency) {
@@ -59,7 +64,9 @@ private fun Project.preferredRuntimeClasspathName(): String {
     }
 }
 
-private fun Project.findConfiguration(names: List<String>): NamedDomainObjectProvider<Configuration>? {
+private fun Project.findConfiguration(
+    names: List<String>,
+): NamedDomainObjectProvider<Configuration>? {
     return names.firstNotNullOfOrNull { name ->
         try {
             configurations.named(name)
@@ -76,7 +83,6 @@ internal fun ComponentSelector.identifier(): String {
         else -> error("Unsupported ComponentSelector type: ${this::class.java.name}")
     }
 }
-
 
 internal fun ResolvedComponentResult.toDependenciesIdentifiers(): Set<String> =
     dependencies.map { it.requested.identifier() }.toSet()

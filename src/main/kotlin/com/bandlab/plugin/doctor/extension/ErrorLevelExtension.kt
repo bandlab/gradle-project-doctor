@@ -1,3 +1,5 @@
+// Copyright 2026 BandLab Singapore Pte Ltd
+// SPDX-License-Identifier: Apache-2.0
 package com.bandlab.plugin.doctor.extension
 
 import com.bandlab.plugin.doctor.DoctorEntry
@@ -8,14 +10,13 @@ import com.bandlab.plugin.doctor.apply
 import com.bandlab.plugin.doctor.internal.WithDependencySelector
 import com.bandlab.plugin.doctor.internal.WithSelector
 import com.bandlab.plugin.doctor.selector.ProjectSelectorConfig
+import javax.inject.Inject
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
 import org.gradle.kotlin.dsl.newInstance
-import javax.inject.Inject
 
-abstract class ErrorLevelExtension @Inject constructor(
-    private val objectFactory: ObjectFactory,
-) : EntryRegistry {
+abstract class ErrorLevelExtension @Inject constructor(private val objectFactory: ObjectFactory) :
+    EntryRegistry {
 
     private lateinit var errCode: String
     private var additionalMessage: String? = null
@@ -49,9 +50,7 @@ abstract class ErrorLevelExtension @Inject constructor(
         )
     }
 
-    fun projectWithDependency(
-        configBuilder: Action<ProjectSelectorConfig>,
-    ): EntryBuilderExtension {
+    fun projectWithDependency(configBuilder: Action<ProjectSelectorConfig>): EntryBuilderExtension {
         val config = ProjectSelectorConfig.create(objectFactory).apply(configBuilder)
         return EntryBuilderExtension.create(
             objectFactory = objectFactory,
