@@ -11,7 +11,7 @@ so structural rules are enforced instead of remembered.
 [![Maven Central](https://img.shields.io/maven-central/v/com.bandlab/project-doctor.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.bandlab/project-doctor)
 [![Latest release](https://img.shields.io/github/v/release/bandlab/gradle-project-doctor?label=latest)](https://github.com/bandlab/gradle-project-doctor/releases/latest)
 
-Configuration Cache · Isolated Projects · **Battle-tested** on a 1600+ modules project.
+Configuration Cache · Isolated Projects · **Battle-tested** on a 1300+ modules project.
 
 </div>
 
@@ -46,7 +46,7 @@ errorOn("Metro runtime must not be exposed via api") {
 If a codebase already breaks a rule you want to introduce,
 [baseline it](#-baselines) and enforce it from that point forward.
 
-Originally built for BandLab Android (1600+ modules), now open source under Apache 2.0.
+Originally built for BandLab Android (1300+ modules), now open source under Apache 2.0.
 
 ## ✨ Highlights
 
@@ -62,7 +62,8 @@ Originally built for BandLab Android (1600+ modules), now open source under Apac
 ## Requirements
 
 - **Java 21 or newer for the JVM running Gradle.** This is the JVM shown as **Daemon JVM** in
-  `./gradlew --version`, not your modules' `jvmToolchain`. Versions before `1.1.0` require Java 25.
+  `./gradlew --version`, not your modules' `jvmToolchain`. Older releases may need a newer JVM,
+  see the [changelog](CHANGELOG.md).
 - A compatible Gradle version. The repository wrapper is **9.8.0**. No lower Gradle minimum
   has been established by a compatibility matrix.
 - Kotlin DSL or Groovy DSL. Examples below use Kotlin DSL, and the functional tests use Groovy.
@@ -87,7 +88,8 @@ pluginManagement {
 
 Replace `<latest_version>` with the version shown above or check the
 [latest release](https://github.com/bandlab/gradle-project-doctor/releases/latest).
-`1.1.0` is available on Maven Central, including the plugin marker.
+You can also find it on
+[Maven Central](https://central.sonatype.com/artifact/com.bandlab/project-doctor), along with the plugin marker.
 Declare the version once here, then apply the plugin versionless anywhere.
 
 Then apply it to the root project **and** each module you want checked:
@@ -321,8 +323,7 @@ A baseline records the current ones so you can enforce the rule from today onwar
 
 First configure `baselineFile = file("doctor-baseline.json")` in the root `projectDoctor` block.
 There is no default baseline path. Generation replaces the file with all current violations,
-including warnings. Review and commit the result. A missing baseline file is treated as empty
-(before `1.1.0`, create it with `[]` first).
+including warnings. Review and commit the result. A missing baseline file is treated as empty.
 
 ```bash
 ./gradlew doctorGenerateBaseline   # snapshot the current violations
@@ -368,8 +369,8 @@ and run again rather than being restored from the build cache.
 
 ## Sample
 
-A runnable multi-module sample lives in [`sample/`](sample/). It consumes released **1.1.0**
-by default.
+A runnable multi-module sample lives in [`sample/`](sample/). It consumes the released plugin
+from Maven Central by default. The version is set in [`sample/settings.gradle.kts`](sample/settings.gradle.kts).
 
 ```bash
 ./gradlew -p sample doctorCheck             # fails on the intentional violations

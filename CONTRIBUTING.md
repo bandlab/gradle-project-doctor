@@ -37,7 +37,7 @@ substitute for regression tests. Kotlin DSL and Groovy DSL are both consumer ent
 
 ## Local sample development
 
-The sample resolves released **1.1.0** from Maven Central by default, so running it normally
+The sample resolves the released plugin from Maven Central by default, so running it normally
 does **not** verify changes to the plugin source. To test the working tree without publishing,
 run this from the repository root:
 

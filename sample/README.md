@@ -1,6 +1,7 @@
 # Project Doctor Sample
 
-Multi-module JVM project demonstrating `com.bandlab.project.doctor` **1.1.0** from Maven Central.
+Multi-module JVM project demonstrating `com.bandlab.project.doctor` from Maven Central.
+The plugin version is set in [`settings.gradle.kts`](settings.gradle.kts).
 It intentionally violates several rules.
 
 ## Prerequisites
