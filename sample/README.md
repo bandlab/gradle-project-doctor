@@ -1,12 +1,12 @@
 # Project Doctor Sample
 
-Multi-module JVM project demonstrating `com.bandlab.project.doctor` **0.2.0** from Maven Central.
+Multi-module JVM project demonstrating `com.bandlab.project.doctor` **1.1.0** from Maven Central.
 It intentionally violates several rules.
 
 ## Prerequisites
 
-- Run the repository's Gradle **9.8.0** wrapper with **Java 25**. The released `0.2.0` requires
-  JVM 25. Check the Daemon JVM in `./gradlew --version`.
+- Run the repository's Gradle **9.8.0** wrapper. The plugin needs Java 21 or newer for Gradle,
+  and the repository pins the daemon to Java 25 in `gradle/gradle-daemon-jvm.properties`.
 - Kotlin JVM **2.1.20** is configured in the sample. Its `jvmToolchain(17)` controls source
   compilation, not the JVM running Gradle. Install JDK 17 if you also compile the sample.
 - Internet access for artifact resolution. No Android SDK or publishing credentials are needed.

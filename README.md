@@ -62,7 +62,7 @@ Originally built for BandLab Android (1600+ modules), now open source under Apac
 ## Requirements
 
 - **Java 21 or newer for the JVM running Gradle.** This is the JVM shown as **Daemon JVM** in
-  `./gradlew --version`, not your modules' `jvmToolchain`. `0.2.0` still requires Java 25.
+  `./gradlew --version`, not your modules' `jvmToolchain`. Versions before `1.1.0` require Java 25.
 - A compatible Gradle version. The repository wrapper is **9.8.0**. No lower Gradle minimum
   has been established by a compatibility matrix.
 - Kotlin DSL or Groovy DSL. Examples below use Kotlin DSL, and the functional tests use Groovy.
@@ -87,7 +87,7 @@ pluginManagement {
 
 Replace `<latest_version>` with the version shown above or check the
 [latest release](https://github.com/bandlab/gradle-project-doctor/releases/latest).
-`0.2.0` is available on Maven Central, including the plugin marker.
+`1.1.0` is available on Maven Central, including the plugin marker.
 Declare the version once here, then apply the plugin versionless anywhere.
 
 Then apply it to the root project **and** each module you want checked:
@@ -322,7 +322,7 @@ A baseline records the current ones so you can enforce the rule from today onwar
 First configure `baselineFile = file("doctor-baseline.json")` in the root `projectDoctor` block.
 There is no default baseline path. Generation replaces the file with all current violations,
 including warnings. Review and commit the result. A missing baseline file is treated as empty
-(in `0.2.0`, create it with `[]` first).
+(before `1.1.0`, create it with `[]` first).
 
 ```bash
 ./gradlew doctorGenerateBaseline   # snapshot the current violations
@@ -368,7 +368,7 @@ and run again rather than being restored from the build cache.
 
 ## Sample
 
-A runnable multi-module sample lives in [`sample/`](sample/). It consumes released **0.2.0**
+A runnable multi-module sample lives in [`sample/`](sample/). It consumes released **1.1.0**
 by default.
 
 ```bash
