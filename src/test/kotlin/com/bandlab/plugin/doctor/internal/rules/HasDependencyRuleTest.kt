@@ -119,7 +119,7 @@ class HasDependencyRuleTest {
             )
         val exclusion =
             com.bandlab.plugin.doctor.internal.rules.exclusion.ProjectPathExclusionMatcher(
-                MatchableValue.Match(":common:di")
+                MatchableValue.Match(":common:di"),
             )
         val config =
             HasDependencyConfig(

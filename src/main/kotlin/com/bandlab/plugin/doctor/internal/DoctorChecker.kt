@@ -31,7 +31,7 @@ internal fun runDoctorCheck(
                                 Selector: ${entry.selector}
                                 Rule: ${entry.rule}
                             """
-                                .trimIndent()
+                                .trimIndent(),
                         )
                     }
                 }

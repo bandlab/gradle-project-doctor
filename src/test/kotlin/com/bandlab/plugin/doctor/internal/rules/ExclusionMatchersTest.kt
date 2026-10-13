@@ -117,7 +117,7 @@ class ExclusionMatchersTest {
                 listOf(
                     PluginExclusionMatcher(MatchableValue.Match("com.android.library")),
                     ProjectPathExclusionMatcher(MatchableValue.Contains("screen")),
-                )
+                ),
             )
 
         // when
@@ -141,7 +141,7 @@ class ExclusionMatchersTest {
                 listOf(
                     PluginExclusionMatcher(MatchableValue.Match("com.android.library")),
                     ProjectPathExclusionMatcher(MatchableValue.Contains("screen")),
-                )
+                ),
             )
 
         // when

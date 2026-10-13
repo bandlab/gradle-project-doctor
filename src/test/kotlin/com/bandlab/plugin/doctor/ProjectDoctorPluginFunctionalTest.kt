@@ -29,7 +29,7 @@ class ProjectDoctorPluginFunctionalTest {
                 rootProject.name = 'fixture'
                 include ':feature:a'
                 """
-                    .trimIndent()
+                    .trimIndent(),
             )
         testProjectDir
             .newFile("build.gradle")
@@ -50,7 +50,7 @@ class ProjectDoctorPluginFunctionalTest {
                 $doctorRules
             }
             """
-                    .trimIndent()
+                    .trimIndent(),
             )
         val featureDir = testProjectDir.newFolder("feature", "a")
         File(featureDir, "build.gradle")
@@ -60,7 +60,7 @@ class ProjectDoctorPluginFunctionalTest {
                 $featurePlugins
             }
             """
-                    .trimIndent()
+                    .trimIndent(),
             )
     }
 
@@ -80,7 +80,7 @@ class ProjectDoctorPluginFunctionalTest {
                         .thatHasPluginWith { id('java-library') }
                 }
                 """
-                    .trimIndent()
+                    .trimIndent(),
         )
 
         val result = runner("doctorCheck").buildAndFail()
@@ -119,7 +119,7 @@ class ProjectDoctorPluginFunctionalTest {
                         .thatHasPluginWith { id('java-library') }
                 }
                 """
-                    .trimIndent()
+                    .trimIndent(),
         )
 
         val result = runner("doctorCheck", "--summary").build()
@@ -141,7 +141,7 @@ class ProjectDoctorPluginFunctionalTest {
                         .thatHasPluginWith { id('java-library') }
                 }
                 """
-                    .trimIndent()
+                    .trimIndent(),
         )
 
         val result = runner("doctorCheck", "--summary").buildAndFail()
@@ -162,7 +162,7 @@ class ProjectDoctorPluginFunctionalTest {
                         .thatHasPluginWith { id('java-library') }
                 }
                 """
-                    .trimIndent()
+                    .trimIndent(),
         )
 
         val result = runner("doctorCheck").build()

@@ -13,7 +13,7 @@ jobs:
         with:
           distribution: zulu
           java-version: '25'
-      - uses: ZacSweers/kempt@v0.3.1
+      - uses: ZacSweers/kempt@v0.4.0
         with:
           cache: true
 

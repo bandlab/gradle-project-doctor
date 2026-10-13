@@ -22,7 +22,7 @@ import org.json.JSONObject
  * will verify evey dependencies.
  */
 @org.gradle.api.tasks.UntrackedTask(
-    because = "Validates composition via logger/error; not safely cacheable"
+    because = "Validates composition via logger/error; not safely cacheable",
 )
 abstract class DoctorValidateTask : DefaultTask() {
 

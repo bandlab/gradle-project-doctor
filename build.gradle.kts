@@ -52,7 +52,7 @@ prop("testJavaVersion")?.let { testJavaVersion ->
         javaLauncher.set(
             javaToolchains.launcherFor {
                 languageVersion.set(JavaLanguageVersion.of(testJavaVersion))
-            }
+            },
         )
     }
 }
@@ -100,7 +100,7 @@ mavenPublishing {
             url.set("https://github.com/bandlab/gradle-project-doctor")
             connection.set("scm:git:git://github.com/bandlab/gradle-project-doctor.git")
             developerConnection.set(
-                "scm:git:ssh://git@github.com/bandlab/gradle-project-doctor.git"
+                "scm:git:ssh://git@github.com/bandlab/gradle-project-doctor.git",
             )
         }
     }

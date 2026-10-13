@@ -40,7 +40,7 @@ abstract class EntryBuilderExtension @Inject constructor(private val objectFacto
     }
 
     infix fun withExclusion(
-        action: Action<ProjectExclusionConfigExtension>
+        action: Action<ProjectExclusionConfigExtension>,
     ): EntryBuilderExtension {
         val extension = objectFactory.newInstance<ProjectExclusionConfigExtension>().apply(action)
         this.exclusionConfig = extension.toConfig()

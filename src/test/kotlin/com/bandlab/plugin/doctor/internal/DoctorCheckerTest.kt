@@ -114,7 +114,7 @@ class DoctorCheckerTest {
         val rule = HasDependencyRule(ruleConfig)
         val exclusionMatcher =
             com.bandlab.plugin.doctor.internal.rules.exclusion.ProjectPathExclusionMatcher(
-                MatchableValue.Contains("zoom")
+                MatchableValue.Contains("zoom"),
             )
         val entry =
             DoctorEntry(
@@ -151,7 +151,7 @@ class DoctorCheckerTest {
                             dependency = MatchableValue.Match("dep.a"),
                             excludedDependency = emptySet(),
                             projectExclusion = ProjectExclusionConfig(emptyList()),
-                        )
+                        ),
                     ),
                 selector = selector,
                 errorLevel = ErrorLevel.Error(null),
@@ -166,7 +166,7 @@ class DoctorCheckerTest {
                             dependency = MatchableValue.Match("dep.b"),
                             excludedDependency = emptySet(),
                             projectExclusion = ProjectExclusionConfig(emptyList()),
-                        )
+                        ),
                     ),
                 selector = selector,
                 errorLevel = ErrorLevel.Error(null),
@@ -201,7 +201,7 @@ class DoctorCheckerTest {
                             dependency = MatchableValue.Match("dep.a"),
                             excludedDependency = emptySet(),
                             projectExclusion = ProjectExclusionConfig(emptyList()),
-                        )
+                        ),
                     ),
                 selector = selector,
                 errorLevel = ErrorLevel.Error(null),
@@ -216,7 +216,7 @@ class DoctorCheckerTest {
                             dependency = MatchableValue.Match("dep.b"),
                             excludedDependency = emptySet(),
                             projectExclusion = ProjectExclusionConfig(emptyList()),
-                        )
+                        ),
                     ),
                 selector = selector,
                 errorLevel = ErrorLevel.Warning(null),
@@ -250,7 +250,7 @@ class DoctorCheckerTest {
                     dependency = MatchableValue.Contains("skiko"),
                     excludedDependency = emptySet(),
                     projectExclusion = ProjectExclusionConfig(emptyList()),
-                )
+                ),
             )
         val entry =
             DoctorEntry(

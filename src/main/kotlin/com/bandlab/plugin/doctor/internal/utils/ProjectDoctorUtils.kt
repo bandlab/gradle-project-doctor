@@ -25,7 +25,7 @@ internal fun Project.runtimeConfiguration(): Provider<Configuration> = provider 
     findConfiguration(classPathNames)?.get()
         ?: throw UnknownConfigurationException(
             "Configuration '$classPathName' not found in project '${this.path}'." +
-                " Available: ${configurations.names.filter { it.contains("runtime", ignoreCase = true) }}"
+                " Available: ${configurations.names.filter { it.contains("runtime", ignoreCase = true) }}",
         )
 }
 
@@ -65,7 +65,7 @@ private fun Project.preferredRuntimeClasspathName(): String {
 }
 
 private fun Project.findConfiguration(
-    names: List<String>
+    names: List<String>,
 ): NamedDomainObjectProvider<Configuration>? {
     return names.firstNotNullOfOrNull { name ->
         try {

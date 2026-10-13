@@ -20,13 +20,13 @@ class ViolationMergerTest {
         val file1 =
             tempFolder.newFile("a.json").apply {
                 writeText(
-                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString()
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString(),
                 )
             }
         val file2 =
             tempFolder.newFile("b.json").apply {
                 writeText(
-                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e2")))).toString()
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e2")))).toString(),
                 )
             }
         val merger = ViolationMerger()
@@ -47,18 +47,18 @@ class ViolationMergerTest {
             tempFolder.newFile("a.json").apply {
                 writeText(
                     MessageGroup.toJsonArray(
-                            listOf(MessageGroup(ErrorLevel.Error("e"), listOf("e1")))
+                            listOf(MessageGroup(ErrorLevel.Error("e"), listOf("e1"))),
                         )
-                        .toString()
+                        .toString(),
                 )
             }
         val file2 =
             tempFolder.newFile("b.json").apply {
                 writeText(
                     MessageGroup.toJsonArray(
-                            listOf(MessageGroup(ErrorLevel.Warning("w"), listOf("w1")))
+                            listOf(MessageGroup(ErrorLevel.Warning("w"), listOf("w1"))),
                         )
-                        .toString()
+                        .toString(),
                 )
             }
         val merger = ViolationMerger()
@@ -78,13 +78,13 @@ class ViolationMergerTest {
             tempFolder.newFile("report.json").apply {
                 writeText(
                     MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1", "e2"))))
-                        .toString()
+                        .toString(),
                 )
             }
         val baseline =
             tempFolder.newFile("baseline.json").apply {
                 writeText(
-                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString()
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString(),
                 )
             }
         val merger = ViolationMerger()
@@ -104,13 +104,13 @@ class ViolationMergerTest {
         val report =
             tempFolder.newFile("report.json").apply {
                 writeText(
-                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString()
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString(),
                 )
             }
         val baseline =
             tempFolder.newFile("baseline.json").apply {
                 writeText(
-                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString()
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString(),
                 )
             }
         val merger = ViolationMerger()
@@ -142,7 +142,7 @@ class ViolationMergerTest {
         val report =
             tempFolder.newFile("report.json").apply {
                 writeText(
-                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString()
+                    MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString(),
                 )
             }
         val baseline = tempFolder.newFile("baseline.json").apply { delete() }
@@ -163,9 +163,9 @@ class ViolationMergerTest {
             tempFolder.newFile("a.json").apply {
                 writeText(
                     MessageGroup.toJsonArray(
-                            listOf(MessageGroup(warning, listOf("w1", "w2", "w3")))
+                            listOf(MessageGroup(warning, listOf("w1", "w2", "w3"))),
                         )
-                        .toString()
+                        .toString(),
                 )
             }
         val merger = ViolationMerger()

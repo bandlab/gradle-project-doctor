@@ -35,7 +35,7 @@ import org.json.JSONObject
  * responsibility will be passed to [DoctorCheckRootTask]
  */
 @org.gradle.api.tasks.UntrackedTask(
-    because = "Reports violations via logger/console and baseline filtering; not safely cacheable"
+    because = "Reports violations via logger/console and baseline filtering; not safely cacheable",
 )
 abstract class DoctorCheckTask : DefaultTask() {
 
@@ -110,7 +110,7 @@ abstract class DoctorCheckTask : DefaultTask() {
                                 buildGradleFile = buildGradleFile.asFile.get(),
                                 outputFile = checkstyleReportFile.asFile.get(),
                             ),
-                        )
+                        ),
                 )
             reporter.report(
                 jsonReportFiles = listOf(logFile),

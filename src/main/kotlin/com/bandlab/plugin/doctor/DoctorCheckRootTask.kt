@@ -19,7 +19,7 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
 @org.gradle.api.tasks.UntrackedTask(
-    because = "Aggregates doctor reports via logger/console; not safely cacheable"
+    because = "Aggregates doctor reports via logger/console; not safely cacheable",
 )
 abstract class DoctorCheckRootTask : DefaultTask() {
 
@@ -55,7 +55,7 @@ abstract class DoctorCheckRootTask : DefaultTask() {
                             reportTitle = "Project Doctor Report",
                         ),
                         ViolationsJsonWriter(mergedReportFile.get().asFile),
-                    )
+                    ),
             )
 
         reporter.report(

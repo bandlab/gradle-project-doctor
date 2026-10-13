@@ -132,14 +132,14 @@ class ProjectDoctorPlugin : Plugin<Project> {
             baselineFile.set(extension.baselineFile)
             mergedReportFile.set(layout.buildDirectory.file("doctor/merged.json"))
             jsonReportFiles.from(
-                doctorCheckDependency.map { it.incoming.artifactView { lenient(true) }.files }
+                doctorCheckDependency.map { it.incoming.artifactView { lenient(true) }.files },
             )
         }
 
         tasks.register<DoctorCreateBaselineTask>(TASK_BASELINE_GENERATE) {
             baselineFile.set(extension.baselineFile)
             jsonReportFiles.from(
-                doctorBaselineDependency.map { it.incoming.artifactView { lenient(true) }.files }
+                doctorBaselineDependency.map { it.incoming.artifactView { lenient(true) }.files },
             )
         }
     }
@@ -155,7 +155,7 @@ class ProjectDoctorPlugin : Plugin<Project> {
                 observedPlugins.set(
                     extension.observedPlugins.map { observed ->
                         observed.filter { project.pluginManager.hasPlugin(it) }.toSet()
-                    }
+                    },
                 )
 
                 dependencies.set(project.runtimeResolvedComponents())
@@ -272,7 +272,7 @@ class ProjectDoctorPlugin : Plugin<Project> {
             mapOf(
                 "path" to path,
                 "configuration" to name.consumable,
-            )
+            ),
         )
 
     private val Project.isEnableCompileTaskIntegration: Boolean
