@@ -15,7 +15,8 @@ This is maintainer guidance. Consumers only need Maven Central and the setup in
 
 Artifacts and plugin markers are published through `com.vanniktech.maven.publish` to the
 [Sonatype Central Portal](https://central.sonatype.com/). Releases are immutable. Do not republish
-`0.2.0`, which is already public.
+an existing version. `1.0.0` is reserved because it was used for an internal release, so
+don't publish it publicly either.
 
 One-time setup:
 
