@@ -115,6 +115,25 @@ class ProjectDoctorPluginFunctionalTest {
     }
 
     @Test
+    fun `doctorCheck treats missing baseline file as empty`() {
+        writeFixture(
+            doctorRules = """
+            baselineFile = file('doctor-baseline.json')
+            errorOn('feature modules must not use java-library') {
+                projectWith { nameContains(':feature:') }
+                    .thatHasPluginWith { id('java-library') }
+            }
+            """.trimIndent()
+        )
+
+        val result = runner("doctorCheck", "--summary").buildAndFail()
+
+        assertThat(result.task(":doctorCheck")?.outcome).isEqualTo(TaskOutcome.FAILED)
+        assertThat(result.output).contains(":feature:a has plugin java-library")
+        assertThat(result.output).doesNotContain("does not exist")
+    }
+
+    @Test
     fun `doctorCheck succeeds when violating project is excluded`() {
         writeFixture(
             doctorRules = """

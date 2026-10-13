@@ -136,6 +136,25 @@ class ViolationMergerTest {
     }
 
     @Test
+    fun `createMergedViolations treats missing baseline as empty`() {
+        // given
+        val error = ErrorLevel.Error("e")
+        val report = tempFolder.newFile("report.json").apply {
+            writeText(
+                MessageGroup.toJsonArray(listOf(MessageGroup(error, listOf("e1")))).toString(),
+            )
+        }
+        val baseline = tempFolder.newFile("baseline.json").apply { delete() }
+        val merger = ViolationMerger()
+
+        // when
+        val result = merger.createMergedViolations(listOf(report), baselineFile = baseline)
+
+        // then
+        assertThat(result.single().messages).containsExactly("e1")
+    }
+
+    @Test
     fun `createMergedViolations handles multiple messages in same group`() {
         // given
         val warning = ErrorLevel.Warning("w")

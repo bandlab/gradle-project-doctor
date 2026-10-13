@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        gradle: ['9.5.1']
         java: ['25']
     steps:
       - uses: actions/checkout@v7
@@ -21,3 +20,45 @@ jobs:
       - name: Test publishing workflow
         run: python3 -B .github/tests/test_publish_workflow.py
       - run: ./gradlew check --no-configuration-cache
+
+  # The plugin targets Java 21, so run the tests (including TestKit builds) on it
+  test-java-21:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          # The last version is the default, used to run the build itself
+          java-version: |
+            21
+            25
+      - uses: gradle/actions/setup-gradle@v6
+      - run: >
+          ./gradlew test --no-configuration-cache
+          -PtestJavaVersion=21
+          "-Dorg.gradle.java.installations.paths=$JAVA_HOME_21_X64"
+
+  sample:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v6
+      # Run the sample against the plugin in the working tree instead of the released artifact
+      - name: Module summary check passes
+        run: ./gradlew -p sample --include-build "$PWD" :feature:home:doctorCheck --summary
+      - name: Root check fails on the intentional violations
+        run: |
+          if ./gradlew -p sample --include-build "$PWD" doctorCheck --summary > sample-check.log 2>&1; then
+            cat sample-check.log
+            echo "Expected doctorCheck to fail on the sample's intentional violations"
+            exit 1
+          fi
+          cat sample-check.log
+          grep -q ':common:utils transitively exposes "com.google.guava:guava"' sample-check.log
+          grep -q ":feature:home doesn't have plugin com.sample.convention.screen" sample-check.log
+          grep -q ":feature:home-api doesn't have plugin org.jetbrains.kotlin.jvm" sample-check.log

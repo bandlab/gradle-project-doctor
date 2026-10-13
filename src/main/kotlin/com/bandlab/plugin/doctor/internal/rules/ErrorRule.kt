@@ -4,20 +4,20 @@ import com.bandlab.plugin.doctor.DoctorRule
 import com.bandlab.plugin.doctor.internal.models.ProjectComposition
 
 /**
- * A [DoctorRule] that match all project to error.
+ * A [DoctorRule] that reports every selected project using a message template.
  *
  * Usage:
  *
- * ```
+ * ```kotlin
  * errorOn {
- *   projectWith { plugin(bandlab.plugins.databinding) }
- *     .reportAs(""Data binding is no longer allowed in {{PATH}} }"
+ *   projectWith { nameContains(":legacy:") }
+ *     .reportAs("{{PATH}} is a legacy module. Migrate before adding features")
  * }
  * ```
  *
  * List of available placeholders:
  * - `{{PATH}}`: The path of the project that triggered the error
- * - `{{PLUGINS}}`: The list of plugins applied to the project that triggered the error
+ * - `{{PLUGINS}}`: The observed plugin IDs recorded for the selected project, not all applied plugins
  */
 class ErrorRule(private val messageTemplate: String) : DoctorRule {
     override fun validate(project: ProjectComposition, onError: (String) -> Unit) {
